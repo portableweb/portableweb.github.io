@@ -500,6 +500,47 @@
 
     .form-hint { font-size: 11px; color: var(--muted); }
 
+    /* Format toggle */
+    .format-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border-mid);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .format-toggle input[type="radio"] { display: none; }
+    .format-toggle label {
+      flex: 1;
+      padding: 7px 12px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: var(--muted);
+      background: var(--surface);
+      border-right: 1px solid var(--border-mid);
+      transition: background 0.12s, color 0.12s;
+      user-select: none;
+    }
+    .format-toggle label:last-of-type { border-right: none; }
+    .format-toggle input[type="radio"]:checked + label {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .format-toggle label .fmt-ext {
+      font-weight: 600;
+    }
+    .format-toggle label .fmt-hint {
+      display: block;
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      margin-top: 1px;
+      opacity: 0.7;
+    }
+
     .dialog-footer {
       display: flex;
       gap: 8px;
@@ -750,6 +791,21 @@
         <label class="form-label" for="new-id">Bundle ID <span class="form-hint">(auto-generated if blank)</span></label>
         <input class="form-input" id="new-id" name="id" placeholder="org.example.my-bundle" pattern="[a-z0-9][a-z0-9\.\-]*">
         <span class="form-hint">Reverse-domain identifier, e.g. org.portableweb.hello</span>
+      </div>
+      <div class="form-row">
+        <span class="form-label">Download as</span>
+        <div class="format-toggle">
+          <input type="radio" name="format" id="fmt-pweb" value="pweb" checked>
+          <label for="fmt-pweb">
+            <span class="fmt-ext">.pweb</span>
+            <span class="fmt-hint">Ready to open &amp; share</span>
+          </label>
+          <input type="radio" name="format" id="fmt-zip" value="zip">
+          <label for="fmt-zip">
+            <span class="fmt-ext">.zip</span>
+            <span class="fmt-hint">Unzip to edit source files</span>
+          </label>
+        </div>
       </div>
     </div>
     <div class="dialog-footer">
@@ -1116,7 +1172,8 @@ const App = (() => {
   function doNew() { $('dialog-new').showModal(); }
 
   async function generateNewProject(data) {
-    const { title, description, author, id } = data;
+    const { title, description, author, id, format } = data;
+    const asPweb = format !== 'zip';
     const bundleId = id.trim() || `org.portableweb.${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')}`;
     const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '') || 'bundle';
 
@@ -1130,7 +1187,6 @@ const App = (() => {
       entry: 'index.html',
       created: new Date().toISOString().split('T')[0],
     };
-    // strip undefined keys
     Object.keys(manifest).forEach(k => manifest[k] === undefined && delete manifest[k]);
 
     const css = `/* ${title} */
@@ -1169,16 +1225,27 @@ p  { margin-bottom: 1rem; color: #3a342d; }
 `;
 
     const zip = new JSZip();
-    zip.file('mimetype', 'application/vnd.portableweb+zip', { compression: 'STORE' });
+
+    if (asPweb) {
+      /* spec-compliant: mimetype first, uncompressed */
+      zip.file('mimetype', 'application/vnd.portableweb+zip', { compression: 'STORE' });
+    }
+
     zip.file('manifest.json', JSON.stringify(manifest, null, 2));
     zip.file('index.html', html);
     zip.file('style.css', css);
 
-    showLoading('Generating bundle…');
+    showLoading('Generating…');
     try {
-      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.portableweb+zip' });
-      downloadBlob(blob, slug + '.pweb');
-      showToast('Downloaded ' + slug + '.pweb');
+      if (asPweb) {
+        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.portableweb+zip' });
+        downloadBlob(blob, slug + '.pweb');
+        showToast('Downloaded ' + slug + '.pweb');
+      } else {
+        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+        downloadBlob(blob, slug + '.zip');
+        showToast('Downloaded ' + slug + '.zip — unzip to edit, then pack when ready');
+      }
     } finally {
       hideLoading();
     }
