@@ -218,80 +218,6 @@
       margin-top: 1px;
     }
 
-    /* ── Window Controls Overlay custom title bar ───────────────────────── */
-
-    #titlebar {
-      display: none; /* hidden in browser / plain standalone */
-      position: fixed;
-      top: env(titlebar-area-y, 0);
-      left: env(titlebar-area-x, 0);
-      width: env(titlebar-area-width, 100%);
-      height: env(titlebar-area-height, 33px);
-      background: #0f0f1a;
-      align-items: center;
-      gap: 8px;
-      padding: 0 14px;
-      z-index: 10000;
-      -webkit-app-region: drag;
-      app-region: drag;
-      user-select: none;
-      overflow: hidden;
-    }
-
-    .tb-icon {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      -webkit-app-region: no-drag;
-      app-region: no-drag;
-    }
-
-    .tb-title {
-      flex: 1;
-      min-width: 0;
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 13px;
-      color: #e8e8ff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: -0.01em;
-    }
-
-    .tb-close {
-      -webkit-app-region: no-drag;
-      app-region: no-drag;
-      background: none;
-      border: none;
-      color: rgba(168,168,210,0.55);
-      cursor: pointer;
-      width: 22px;
-      height: 22px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-      transition: background 0.1s, color 0.1s;
-      padding: 0;
-    }
-    .tb-close:hover { background: rgba(255,255,255,0.1); color: #e8e8ff; }
-
-    @media (display-mode: window-controls-overlay) {
-      #titlebar { display: flex; }
-
-      /* The app's own header bar and viewer toolbar are replaced by the WCO bar */
-      .dash-header    { display: none; }
-      .viewer-toolbar { display: none !important; }
-
-      /* Push view content below the WCO title bar */
-      #view-dashboard { padding-top: env(titlebar-area-height, 33px); }
-      #view-viewer    { padding-top: env(titlebar-area-height, 33px); }
-    }
-
     /* ── Compact open section ────────────────────────────────────────────── */
 
     .open-section {
@@ -808,13 +734,6 @@
 
 <body>
 
-<!-- ── WCO custom title bar ──────────────────────────────────────────────── -->
-<div id="titlebar">
-  <img src="/icons/icon.svg" class="tb-icon" alt="" draggable="false">
-  <span class="tb-title" id="tb-title">PortableWeb</span>
-  <button class="tb-close" id="tb-close" hidden aria-label="Back to home">&#x2715;</button>
-</div>
-
 <div id="root">
 
   <!-- ── Dashboard ───────────────────────────────────────────────────────── -->
@@ -1214,17 +1133,8 @@ const App = (() => {
   function showViewer() {
     const { manifest, sessionId } = currentBundle;
     document.title = manifest.title;
-
-    // Sync WCO title bar text and back button visibility
-    const tbTitle = $('tb-title');
-    if (tbTitle) tbTitle.textContent = manifest.title;
-    const tbClose = $('tb-close');
-    if (tbClose) tbClose.hidden = openedViaFileHandler;
-
-    // Non-WCO: hide the slim toolbar when opened via OS double-click
     const toolbar = $('viewer-toolbar');
     if (toolbar) toolbar.style.display = openedViaFileHandler ? 'none' : 'flex';
-
     $('viewer-frame').src = `/app/bundle/${sessionId}/${manifest.entry}`;
     setView('viewer');
   }
@@ -1235,10 +1145,6 @@ const App = (() => {
     currentBundle = null;
     openedViaFileHandler = false;
     document.title = 'PortableWeb';
-    const tbTitle = $('tb-title');
-    if (tbTitle) tbTitle.textContent = 'PortableWeb';
-    const tbClose = $('tb-close');
-    if (tbClose) tbClose.hidden = true;
     setView('dashboard');
   }
 
@@ -1779,7 +1685,6 @@ portableweb pack ./   # full name</code></pre>
     $('btn-new').addEventListener('click', doNew);
 
     $('btn-back').addEventListener('click', closeViewer);
-    $('tb-close').addEventListener('click', closeViewer);
 
     $('form-new').addEventListener('submit', async (e) => {
       e.preventDefault();
