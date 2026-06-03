@@ -245,6 +245,24 @@
     }
     .btn-open-file:hover { opacity: 0.85; }
 
+    .btn-generate {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: transparent;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1.5px solid var(--accent);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-generate:hover { background: var(--accent); color: #fff; }
+
     .open-drag-hint {
       font-size: 12px;
       color: var(--muted);
@@ -749,6 +767,10 @@
         <button class="btn-open-file" id="btn-open">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 8.5v1.25A.75.75 0 002.25 10.5h7.5a.75.75 0 00.75-.75V8.5M6 1.5v6M3.5 5l2.5 2.5L8.5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Open .pweb file
+        </button>
+        <button class="btn-generate" id="btn-generate">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v4M4 6h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Generate .pweb
         </button>
         <span class="open-drag-hint" id="open-drag-hint">or drag a .pweb anywhere on this window</span>
       </div>
@@ -1619,6 +1641,7 @@ portableweb pack ./   # full name</code></pre>
     $('btn-pack').addEventListener('click', doPack);
     $('btn-validate').addEventListener('click', doValidate);
     $('btn-new').addEventListener('click', doNew);
+    $('btn-generate').addEventListener('click', doNew);
 
     $('btn-back').addEventListener('click', closeViewer);
 
