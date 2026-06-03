@@ -818,7 +818,7 @@
 /* ── PortableWeb PWA app ─────────────────────────────────────────────────── */
 const App = (() => {
   /* State */
-  let currentBundle = null; // { manifest, iframeSrc, blobUrls }
+  let currentBundle = null; // { manifest, sessionId }
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -868,10 +868,39 @@ const App = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  function revokeBundleUrls() {
-    if (!currentBundle) return;
-    Object.values(currentBundle.blobUrls || {}).forEach(u => URL.revokeObjectURL(u));
-    if (currentBundle.iframeSrc) URL.revokeObjectURL(currentBundle.iframeSrc);
+  /* ── IndexedDB helpers ────────────────────────────────────────────────── */
+
+  function openIDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('portableweb', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('bundle-files');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function storeBundle(sessionId, entries) {
+    const db = await openIDB();
+    const tx = db.transaction('bundle-files', 'readwrite');
+    const store = tx.objectStore('bundle-files');
+    for (const { path, data, mime } of entries) {
+      store.put({ data, mime }, `${sessionId}/${path}`);
+    }
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }
+
+  function clearBundle(sessionId) {
+    openIDB().then(db => {
+      const tx = db.transaction('bundle-files', 'readwrite');
+      tx.objectStore('bundle-files').delete(
+        IDBKeyRange.bound(`${sessionId}/`, `${sessionId}/￿`)
+      );
+      tx.oncomplete = () => db.close();
+    }).catch(() => {});
   }
 
   function getMime(path) {
@@ -906,46 +935,56 @@ const App = (() => {
   /* ── Bundle open ──────────────────────────────────────────────────────── */
 
   async function openBundle(file) {
+    // The service worker must be active before the iframe can load bundle files.
+    // On the very first page load the SW may not yet be controlling — wait for it.
+    if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
+      showLoading('Initialising viewer…');
+      await navigator.serviceWorker.ready;
+      // SW just activated — reload so it can control this page, then re-open.
+      sessionStorage.setItem('pweb-pending-reopen', '1');
+      location.reload();
+      return;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      showError('Your browser must support Service Workers to open .pweb bundles.');
+      return;
+    }
+
     showLoading('Opening bundle…');
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const zip = await JSZip.loadAsync(arrayBuffer);
+      const zip = await JSZip.loadAsync(await file.arrayBuffer());
 
       /* Parse manifest */
       const mf = zip.file('manifest.json');
       if (!mf) throw new Error('Invalid bundle: missing manifest.json');
       const manifest = JSON.parse(await mf.async('text'));
-      const required = ['spec_version', 'title', 'entry'];
-      for (const k of required) {
+      for (const k of ['spec_version', 'title', 'entry']) {
         if (!manifest[k]) throw new Error(`manifest.json is missing required field: "${k}"`);
       }
 
-      /* Build blob URL map for every file */
-      const blobUrls = {};
-      const tasks = [];
-      zip.forEach((relPath, entry) => {
-        if (entry.dir) return;
-        tasks.push(
-          entry.async('arraybuffer').then(data => {
-            blobUrls[relPath] = URL.createObjectURL(new Blob([data], { type: getMime(relPath) }));
-          })
-        );
-      });
-      await Promise.all(tasks);
+      /* Extract every file and store in IndexedDB */
+      const sessionId = crypto.randomUUID
+        ? crypto.randomUUID()
+        : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
 
-      /* Process entry HTML — rewrite relative src/href/url() to blob URLs */
-      const entryPath = manifest.entry;
-      const entryFile = zip.file(entryPath);
-      if (!entryFile) throw new Error(`Entry file not found: ${entryPath}`);
+      const entries = [];
+      await Promise.all(
+        Object.values(zip.files)
+          .filter(entry => !entry.dir)
+          .map(entry =>
+            entry.async('uint8array').then(data => {
+              entries.push({ path: entry.name, data, mime: getMime(entry.name) });
+            })
+          )
+      );
 
-      let html = await entryFile.async('text');
-      html = rewriteHtml(html, blobUrls, entryPath);
+      await storeBundle(sessionId, entries);
 
-      const iframeSrc = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      /* Clear previous session */
+      if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
 
-      revokeBundleUrls();
-      currentBundle = { manifest, iframeSrc, blobUrls };
-
+      currentBundle = { manifest, sessionId };
       addRecent(file.name, manifest);
       showViewer();
     } catch (e) {
@@ -955,42 +994,12 @@ const App = (() => {
     }
   }
 
-  function rewriteHtml(html, blobUrls, entryPath) {
-    const baseDir = entryPath.includes('/')
-      ? entryPath.slice(0, entryPath.lastIndexOf('/') + 1)
-      : '';
-
-    const resolve = (url) => {
-      if (!url) return null;
-      if (/^(https?:|\/\/|data:|blob:|javascript:|#)/.test(url)) return null;
-      const full = url.startsWith('/') ? url.slice(1) : baseDir + url;
-      return blobUrls[full] || null;
-    };
-
-    /* src / href / action attributes */
-    html = html.replace(/\b(src|href|action)=(["'])([^"']+)\2/gi, (m, attr, q, url) => {
-      const b = resolve(url);
-      return b ? `${attr}=${q}${b}${q}` : m;
-    });
-
-    /* CSS url() */
-    html = html.replace(/url\((['"]?)([^)'"]+)\1\)/gi, (m, q, url) => {
-      const b = resolve(url);
-      return b ? `url(${q}${b}${q})` : m;
-    });
-
-    /* Inject sandbox-friendly <base> to avoid broken relative fetches */
-    if (!/<base\b/i.test(html)) {
-      html = html.replace(/<head([^>]*)>/i, '<head$1><base href="about:blank">');
-    }
-
-    return html;
-  }
-
   function showViewer() {
-    const { manifest, iframeSrc } = currentBundle;
+    const { manifest, sessionId } = currentBundle;
     $('viewer-title').textContent = manifest.title;
-    $('viewer-frame').src = iframeSrc;
+    // Service worker intercepts /bundle/<sessionId>/* and serves from IndexedDB.
+    // Relative fetch/import inside the bundle resolve against this URL correctly.
+    $('viewer-frame').src = `/bundle/${sessionId}/${manifest.entry}`;
     setView('viewer');
   }
 
@@ -1365,7 +1374,7 @@ p  { margin-bottom: 1rem; color: #3a342d; }
 
     $('btn-back').addEventListener('click', () => {
       $('viewer-frame').src = 'about:blank';
-      revokeBundleUrls();
+      if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
       currentBundle = null;
       setView('dashboard');
     });
