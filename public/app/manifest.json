@@ -4,7 +4,7 @@
   "description": "Open, view, pack, and validate .pweb interactive document bundles.",
   "start_url": "/app/",
   "scope": "/app/",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "any",
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",
