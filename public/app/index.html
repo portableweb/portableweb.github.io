@@ -921,7 +921,7 @@
 
   <!-- ── Viewer ───────────────────────────────────────────────────────────── -->
   <div id="view-viewer" class="view">
-    <div class="viewer-toolbar">
+    <div class="viewer-toolbar" id="viewer-toolbar">
       <button class="btn-close" id="btn-back" title="Back to home" aria-label="Back to home">&#x2715;</button>
     </div>
     <div class="viewer-frame-wrap">
@@ -1222,7 +1222,8 @@ const App = (() => {
     if (tbClose) tbClose.hidden = openedViaFileHandler;
 
     // Non-WCO: hide the slim toolbar when opened via OS double-click
-    $('viewer-toolbar').style.display = openedViaFileHandler ? 'none' : 'flex';
+    const toolbar = $('viewer-toolbar');
+    if (toolbar) toolbar.style.display = openedViaFileHandler ? 'none' : 'flex';
 
     $('viewer-frame').src = `/app/bundle/${sessionId}/${manifest.entry}`;
     setView('viewer');
