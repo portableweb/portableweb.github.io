@@ -950,6 +950,7 @@
 const App = (() => {
   /* State */
   let currentBundle = null; // { manifest, sessionId }
+  let openedViaFileHandler = false;
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -1132,6 +1133,9 @@ const App = (() => {
     const { manifest, sessionId } = currentBundle;
     document.title = manifest.title;
     $('viewer-frame').src = `/app/bundle/${sessionId}/${manifest.entry}`;
+    /* Hide the toolbar entirely when the file was opened via OS double-click —
+       the window close button is sufficient; there is no dashboard to return to. */
+    $('viewer-toolbar').style.display = openedViaFileHandler ? 'none' : 'flex';
     setView('viewer');
   }
 
@@ -1572,6 +1576,7 @@ portableweb pack ./   # full name</code></pre>
     window.launchQueue.setConsumer(async (params) => {
       if (!params.files.length) return;
       try {
+        openedViaFileHandler = true;
         const file = await params.files[0].getFile();
         await openBundle(file);
       } catch (e) {
