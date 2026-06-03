@@ -1,5 +1,5 @@
 /* PortableWeb PWA service worker */
-const CACHE = 'portableweb-v5';
+const CACHE = 'portableweb-v6';
 const DB_NAME = 'portableweb';
 const STORE = 'bundle-files';
 
