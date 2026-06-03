@@ -333,50 +333,6 @@
       line-height: 1.4;
     }
 
-    /* Recent */
-    .recent-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .recent-list { display: flex; flex-direction: column; gap: 1px; }
-
-    .recent-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--surface);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.12s;
-    }
-    .recent-item:hover { background: var(--border); }
-
-    .recent-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 5px;
-      flex-shrink: 0;
-    }
-
-    .recent-info { flex: 1; min-width: 0; }
-    .recent-title {
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .recent-meta {
-      font-size: 11px;
-      color: var(--muted);
-      font-family: var(--mono);
-    }
 
     /* ── Viewer ──────────────────────────────────────────────────────────── */
     #view-viewer {
@@ -841,11 +797,6 @@
         </div>
       </section>
 
-      <!-- Recent files -->
-      <section id="recent-section" hidden>
-        <div class="recent-label">Recent</div>
-        <div class="recent-list" id="recent-list"></div>
-      </section>
 
     </div>
   </div>
@@ -1134,7 +1085,6 @@ const App = (() => {
       if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
 
       currentBundle = { manifest, sessionId, filename: file.name };
-      addRecent(file.name, manifest);
       showViewer();
     } catch (e) {
       showError(e.message);
@@ -1564,44 +1514,6 @@ portableweb pack ./   # full name</code></pre>
     $('dialog-info').showModal();
   }
 
-  /* ── Recent files ─────────────────────────────────────────────────────── */
-
-  function addRecent(filename, manifest) {
-    const list = getRecent();
-    const entry = { filename, title: manifest.title, when: Date.now() };
-    const updated = [entry, ...list.filter(r => r.filename !== filename)].slice(0, 8);
-    try { localStorage.setItem('pweb-recent', JSON.stringify(updated)); } catch {}
-    renderRecent();
-  }
-
-  function getRecent() {
-    try { return JSON.parse(localStorage.getItem('pweb-recent') || '[]'); } catch { return []; }
-  }
-
-  function renderRecent() {
-    const list = getRecent();
-    const section = $('recent-section');
-    const container = $('recent-list');
-    if (!list.length) { section.hidden = true; return; }
-    section.hidden = false;
-    container.innerHTML = list.map(r => `
-      <div class="recent-item">
-        <img src="/icons/icon.svg" class="recent-icon" alt="">
-        <div class="recent-info">
-          <div class="recent-title">${escHtml(r.title)}</div>
-          <div class="recent-meta">${escHtml(r.filename)} &middot; ${timeAgo(r.when)}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function timeAgo(ts) {
-    const d = Date.now() - ts;
-    if (d < 60000) return 'just now';
-    if (d < 3600000) return Math.floor(d / 60000) + 'm ago';
-    if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
-    return Math.floor(d / 86400000) + 'd ago';
-  }
 
   /* ── PWA: File Handling API (OS file-open) ───────────────────────────── */
   function setupFileHandling() {
@@ -1747,7 +1659,6 @@ portableweb pack ./   # full name</code></pre>
     setupInstallPrompt();
     setupMobileHint();
     setupEvents();
-    renderRecent();
     registerSW();
   }
 
