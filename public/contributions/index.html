@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contributions &mdash; PortableWeb</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+
+  <style>
+    :root {
+      --ink:        #0f0f1a;
+      --ink-soft:   #2d2d50;
+      --paper:      #f7f8ff;
+      --surface:    #edeeff;
+      --border:     rgba(15,15,26,0.12);
+      --accent:     #7c3aed;
+      --muted:      #6565a0;
+      --gradient:   linear-gradient(135deg, #7c3aed 0%, #2563eb 46%, #20d6d2 100%);
+      --serif:      ui-serif, "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", serif;
+      --sans:       ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --mono:       ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink:      #e8e8ff;
+        --ink-soft: #b0b0d8;
+        --paper:    #08080f;
+        --surface:  #0f0f1e;
+        --border:   rgba(232,232,255,0.1);
+        --muted:    #7070a8;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; transition: opacity 0.15s; }
+    a:hover { opacity: 0.7; }
+
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 clamp(1.25rem, 4vw, 2.5rem); }
+
+    /* Header */
+    header.site {
+      padding: 2rem 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-logo { width: 20px; height: 20px; border-radius: 4px; }
+    .site-home { color: var(--muted); border-bottom: none; }
+    .site-home:hover { color: var(--ink); opacity: 1; }
+    .sep { margin: 0 0.25rem; opacity: 0.4; }
+
+    /* Page */
+    .page-header {
+      padding: clamp(3rem, 8vh, 5rem) 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 20px; height: 2px;
+      background: var(--gradient);
+      border-radius: 2px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .page-lede {
+      font-size: 1.05rem;
+      color: var(--ink-soft);
+      max-width: 34em;
+    }
+
+    /* Sections */
+    section {
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-child { border-bottom: none; }
+
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 400;
+      font-style: italic;
+      margin-bottom: 1.5rem;
+      color: var(--ink);
+    }
+
+    /* Person card */
+    .person {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+    }
+
+    .person-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--gradient);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .person-info { flex: 1; }
+
+    .person-name {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+    }
+
+    .person-role {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .person-bio {
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+
+    .person-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .person-links a {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .person-links a:hover { color: var(--accent); border-bottom-color: currentColor; opacity: 1; }
+
+    /* How to contribute */
+    .contrib-ways { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem; }
+
+    .contrib-way {
+      display: grid;
+      grid-template-columns: 2ch 1fr;
+      gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .contrib-num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .contrib-text { font-size: 0.95rem; color: var(--ink-soft); }
+    .contrib-text strong { color: var(--ink); font-weight: 500; }
+
+    /* Footer */
+    footer {
+      padding: 3rem 0 2.5rem;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); border-bottom: 1px solid transparent; }
+    footer a:hover { color: var(--ink); border-bottom-color: currentColor; opacity: 1; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site">
+    <a class="site-home" href="/">
+      <img src="/icons/icon.svg" class="site-logo" alt="PortableWeb">
+    </a>
+    <span class="sep">/</span>
+    <span>Contributions</span>
+  </header>
+
+  <div class="page-header">
+    <p class="eyebrow">People</p>
+    <h1>The people behind PortableWeb.</h1>
+    <p class="page-lede">
+      PortableWeb is an open project. This page credits the people who have
+      shaped the format, the tooling, and the community.
+    </p>
+  </div>
+
+  <section>
+    <h2>Creator</h2>
+    <div class="person">
+      <div class="person-avatar" aria-hidden="true">OS</div>
+      <div class="person-info">
+        <div class="person-name">Omprakash Selvaraj</div>
+        <div class="person-role">Founder &amp; author</div>
+        <p class="person-bio">
+          Conceived and built PortableWeb from the ground up &mdash; the format spec,
+          the CLI, the desktop viewer, and this website. Working on making interactive
+          documents a real, lasting thing.
+        </p>
+        <div class="person-links">
+          <a href="https://github.com/omscse" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/portableweb" target="_blank" rel="noopener">Org</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How to get involved</h2>
+    <div class="contrib-ways">
+      <div class="contrib-way">
+        <span class="contrib-num">01</span>
+        <p class="contrib-text">
+          <strong>Read and comment on the spec.</strong>
+          Open issues or pull requests on
+          <a href="https://github.com/portableweb/spec" target="_blank" rel="noopener">portableweb/spec</a>.
+          The format is still in draft &mdash; early feedback shapes it most.
+        </p>
+      </div>
+      <div class="contrib-way">
+        <span class="contrib-num">02</span>
+        <p class="contrib-text">
+          <strong>Build something with it.</strong>
+          Create a <code style="font-family:ui-monospace,Menlo,monospace;font-size:0.82em;background:var(--surface);padding:1px 5px;border-radius:3px;color:var(--accent)">.pweb</code> bundle
+          and share it. Real-world usage drives the spec far more than theory.
+        </p>
+      </div>
+      <div class="contrib-way">
+        <span class="contrib-num">03</span>
+        <p class="contrib-text">
+          <strong>Contribute code.</strong>
+          The CLI, viewer, and website repos all welcome PRs.
+          Check the open issues on
+          <a href="https://github.com/portableweb" target="_blank" rel="noopener">github.com/portableweb</a>
+          for good starting points.
+        </p>
+      </div>
+      <div class="contrib-way">
+        <span class="contrib-num">04</span>
+        <p class="contrib-text">
+          <strong>Spread the word.</strong>
+          Tell anyone who works with documents, archival, AI-generated content,
+          or interactive media. The format only matters if people know it exists.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="/">portableweb.org</a>
+    &nbsp;&middot;&nbsp;
+    <a href="https://github.com/portableweb">GitHub</a>
+    &nbsp;&middot;&nbsp;
+    Spec CC-BY 4.0 &middot; Code MIT
+  </footer>
+
+</div>
+</body>
+</html>
