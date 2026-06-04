@@ -14,6 +14,10 @@
 
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --ink:           #0f0f1a;
@@ -27,9 +31,9 @@
       --muted:         #6565a0;
       --muted-soft:    #9090b8;
       --gradient:      linear-gradient(135deg, #7c3aed 0%, #2563eb 46%, #20d6d2 100%);
-      --serif:         ui-serif, "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", "Droid Serif", Times, "Source Serif Pro", serif;
-      --sans:          ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-      --mono:          ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      --serif:         "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      --sans:          "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono:          "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -79,6 +83,19 @@
     }
     a:hover { opacity: 0.7; }
 
+    /* ---------- Scrollbar ---------- */
+    * { scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
+    ::-webkit-scrollbar { width: 13px; height: 13px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--muted);
+      border-radius: 10px;
+      border: 3px solid var(--paper);
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--ink-soft); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+
     code, pre {
       font-family: var(--mono);
       font-size: 0.85em;
@@ -116,11 +133,22 @@
       border-bottom: none;
     }
 
-    .mark-icon {
-      width: 22px;
-      height: 22px;
+    .mark-glyph {
+      width: 24px;
+      height: 24px;
       flex-shrink: 0;
-      border-radius: 5px;
+      color: var(--ink);
+      display: block;
+    }
+
+    .mark-word {
+      font-family: "Geist", var(--sans);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      text-transform: none;
+      color: var(--ink);
+      line-height: 1;
     }
 
     nav.site {
@@ -134,6 +162,21 @@
     }
     nav.site a:hover { color: var(--ink); }
 
+    nav.site a.nav-app {
+      color: var(--ink);
+      border: 1px solid var(--rule);
+      padding: 0.34rem 0.75rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    nav.site a.nav-app:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); opacity: 1; }
+    nav.site a.nav-app svg { transition: transform 0.15s ease; }
+    nav.site a.nav-app:hover svg { transform: translateX(2px); }
+
     /* ---------- Hero ---------- */
 
     .hero {
@@ -143,6 +186,7 @@
     .status {
       display: inline-flex;
       align-items: center;
+      white-space: nowrap;
       gap: 0.5rem;
       padding: 0.35rem 0.8rem;
       border: 1px solid var(--rule);
@@ -170,8 +214,8 @@
 
     h1.hero-title {
       font-family: var(--serif);
-      font-weight: 400;
-      font-style: italic;
+      font-weight: 600;
+      font-style: normal;
       font-size: clamp(2.75rem, 8vw, 5rem);
       line-height: 1.02;
       letter-spacing: -0.025em;
@@ -253,8 +297,8 @@
 
     h2 {
       font-family: var(--serif);
-      font-weight: 400;
-      font-style: italic;
+      font-weight: 600;
+      font-style: normal;
       font-size: clamp(1.85rem, 4vw, 2.5rem);
       line-height: 1.15;
       letter-spacing: -0.015em;
@@ -264,7 +308,7 @@
 
     h3 {
       font-family: var(--serif);
-      font-weight: 400;
+      font-weight: 500;
       font-size: 1.25rem;
       margin: 0 0 0.5rem;
       color: var(--ink);
@@ -316,10 +360,11 @@
 
     .pillars {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 2rem;
       margin-top: 2rem;
     }
+    @media (max-width: 540px) { .pillars { grid-template-columns: 1fr; } }
 
     .pillar h3::before {
       content: "";
@@ -357,7 +402,7 @@
       margin-bottom: 0.75rem;
     }
 
-    .use-case h3 { font-size: 1.1rem; font-style: italic; }
+    .use-case h3 { font-size: 1.1rem; font-style: normal; }
     .use-case p { font-size: 0.9rem; color: var(--ink-soft); margin: 0; }
 
     /* ---------- Comparison ---------- */
@@ -426,7 +471,7 @@
     }
     .roadmap-version.future { color: var(--muted); }
 
-    .roadmap-body h3 { font-size: 1rem; margin-bottom: 0.25rem; font-style: italic; }
+    .roadmap-body h3 { font-size: 1rem; margin-bottom: 0.25rem; font-style: normal; }
     .roadmap-body p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
 
     /* ---------- Get involved ---------- */
@@ -462,50 +507,108 @@
 
     /* ---------- Viewer section ---------- */
 
-    .viewer-features {
+    .viewer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 1px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      margin: 2rem 0 2rem;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 2.75rem;
+      align-items: start;
+      margin-top: 2.25rem;
+    }
+    @media (max-width: 760px) {
+      .viewer-grid { grid-template-columns: 1fr; gap: 2rem; }
     }
 
-    .viewer-feature {
-      background: var(--paper);
-      padding: 1.25rem 1.25rem;
+    .viewer-caps {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 2rem;
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
     }
-
-    .vf-label {
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+    .viewer-caps li {
+      display: flex;
+      gap: 0.85rem;
+      padding: 0.95rem 0;
+      border-bottom: 1px solid var(--paper-darker);
+      align-items: flex-start;
+    }
+    .viewer-caps li:last-child { border-bottom: none; }
+    .vc-icon {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      background: var(--paper-shadow);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
       color: var(--accent);
+      margin-top: 1px;
     }
-
-    .vf-desc {
-      font-size: 0.9rem;
-      color: var(--ink-soft);
-      line-height: 1.5;
-    }
+    .vc-title { display: block; font-weight: 600; font-size: 0.98rem; color: var(--ink); letter-spacing: -0.01em; }
+    .vc-desc { display: block; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; margin-top: 0.12rem; }
+    .vc-desc code { font-family: var(--mono); font-size: 0.82em; }
 
     .viewer-cta {
       display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.95rem;
     }
-
     .viewer-install-note {
       font-size: 0.85rem;
       color: var(--muted);
       max-width: 34em;
       margin: 0;
     }
+
+    /* App preview mock */
+    .app-mock {
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      height: 360px;
+      background: var(--paper);
+      box-shadow: 0 18px 50px rgba(15,15,26,0.16);
+    }
+    .mock-rail {
+      width: 44%;
+      max-width: 168px;
+      background: #0c0c16;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      position: relative;
+    }
+    .mock-rail::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--gradient);
+    }
+    .mock-brand { display: flex; align-items: center; gap: 7px; color: #e8e8ff; padding: 4px 6px 10px; }
+    .mock-brand svg { width: 16px; height: 16px; }
+    .mock-brand .mb-word { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: -0.02em; }
+    .mock-label { font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(168,168,210,0.5); padding: 9px 7px 4px; }
+    .mock-item { display: flex; align-items: center; gap: 8px; padding: 6px 7px; border-radius: 6px; color: #c7c7e4; font-family: var(--sans); font-size: 10.5px; }
+    .mock-item .mi-ic { width: 16px; height: 16px; border-radius: 4px; background: rgba(168,168,210,0.13); flex-shrink: 0; }
+    .mock-work { flex: 1; display: flex; flex-direction: column; background: var(--paper); }
+    .mock-topbar { height: 28px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; padding: 0 12px; }
+    .mock-crumb { font-family: var(--mono); font-size: 8px; letter-spacing: 0.06em; color: var(--muted); }
+    .mock-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .mock-hero {
+      width: 100%;
+      border: 1.5px dashed var(--rule);
+      border-radius: 12px;
+      background: var(--paper-shadow);
+      padding: 20px 12px;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .mock-hero .mh-glyph { width: 32px; height: 32px; border-radius: 9px; background: var(--paper); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; color: var(--ink); }
+    .mock-hero .mh-glyph svg { width: 17px; height: 17px; }
+    .mock-hero .mh-title { font-family: var(--sans); font-weight: 600; font-size: 12px; color: var(--ink); white-space: nowrap; }
+    .mock-hero .mh-sub { font-family: var(--sans); font-size: 8.5px; color: var(--muted); }
+    .mock-hero .mh-btn { margin-top: 5px; padding: 6px 13px; border-radius: 7px; background: var(--gradient); color: #fff; font-family: var(--sans); font-size: 9.5px; font-weight: 600; white-space: nowrap; }
+    @media (max-width: 760px) { .app-mock { height: 320px; } }
 
     /* ---------- Footer ---------- */
 
@@ -556,8 +659,12 @@
   <!-- Header -->
   <header class="site">
     <a class="mark" href="/">
-      <img src="/icons/icon.svg" class="mark-icon" alt="PortableWeb logo">
-      <span>PortableWeb</span>
+      <svg class="mark-glyph" width="24" height="24" viewBox="0 0 36 36" aria-hidden="true">
+        <rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.32"></rect>
+        <rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.6"></rect>
+        <rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"></rect>
+      </svg>
+      <span class="mark-word">PortableWeb</span>
     </a>
     <nav class="site">
       <a href="#what">What</a>
@@ -565,6 +672,7 @@
       <a href="#viewer">Viewer</a>
       <a href="#roadmap">Roadmap</a>
       <a href="https://github.com/portableweb">GitHub</a>
+      <a class="nav-app" href="/app/">Open app <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 10l6-6M5 4h5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
     </nav>
   </header>
 
@@ -581,10 +689,10 @@
       but a file you own.
     </p>
     <div class="cta-row">
-      <a class="btn primary" href="https://github.com/portableweb">
-        Read the spec &rarr;
+      <a class="btn primary" href="/app/">
+        Open the web app &rarr;
       </a>
-      <a class="btn" href="#anatomy">See what&rsquo;s inside</a>
+      <a class="btn" href="https://github.com/portableweb">Read the spec</a>
     </div>
   </section>
 
@@ -771,39 +879,88 @@
   <!-- Web viewer app -->
   <section class="block" id="viewer">
     <p class="eyebrow">Try it now</p>
-    <h2>A browser-based viewer. No download, no account.</h2>
+    <h2>A browser-based app for working with bundles.</h2>
     <p>
-      The PortableWeb web app runs entirely in your browser. Open any
-      <code>.pweb</code> file, inspect it, validate it against the spec,
-      pack a project folder into a new bundle, or scaffold a starter project
-      &mdash; all without installing anything.
+      The PortableWeb app runs entirely in your browser &mdash; open and render any
+      <code>.pweb</code>, pack a project folder into a bundle, validate one against
+      the spec, or scaffold a new project. No install, no account, and nothing ever
+      leaves your device.
     </p>
 
-    <div class="viewer-features">
-      <div class="viewer-feature">
-        <span class="vf-label">Open &amp; render</span>
-        <span class="vf-desc">Drag a <code>.pweb</code> onto the window or use the file picker to open and render any bundle.</span>
-      </div>
-      <div class="viewer-feature">
-        <span class="vf-label">Pack</span>
-        <span class="vf-desc">Select a project folder to build a spec-compliant <code>.pweb</code> with one click.</span>
-      </div>
-      <div class="viewer-feature">
-        <span class="vf-label">Validate</span>
-        <span class="vf-desc">Run 12 spec checks against any <code>.pweb</code> and get a pass&thinsp;/&thinsp;fail report.</span>
-      </div>
-      <div class="viewer-feature">
-        <span class="vf-label">New project</span>
-        <span class="vf-desc">Generate a ready-to-edit starter bundle, download as <code>.pweb</code> or <code>.zip</code>.</span>
-      </div>
-    </div>
+    <div class="viewer-grid">
+      <div class="viewer-left">
+        <ul class="viewer-caps">
+          <li>
+            <span class="vc-icon">
+              <svg width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 8.5v1.25A.75.75 0 002.25 10.5h7.5a.75.75 0 00.75-.75V8.5M6 1.5v6M3.5 5l2.5 2.5L8.5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <span class="vc-title">Open &amp; render</span>
+              <span class="vc-desc">Drag a <code>.pweb</code> anywhere onto the window &mdash; it opens sandboxed, full-screen.</span>
+            </div>
+          </li>
+          <li>
+            <span class="vc-icon">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="13" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 15.5v-7M6.2 11l2.8-2.8L11.8 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <span class="vc-title">Pack</span>
+              <span class="vc-desc">Turn a project folder into a spec-compliant <code>.pweb</code> bundle in one click.</span>
+            </div>
+          </li>
+          <li>
+            <span class="vc-icon">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M6.2 9l2 2 3.6-3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <span class="vc-title">Validate</span>
+              <span class="vc-desc">Run the spec checks against any bundle and get a clear pass&thinsp;/&thinsp;fail report.</span>
+            </div>
+          </li>
+          <li>
+            <span class="vc-icon">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="13" height="13" rx="3" stroke="currentColor" stroke-width="1.4"/><path d="M9 6v6M6 9h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <span class="vc-title">New project</span>
+              <span class="vc-desc">Scaffold a ready-to-edit starter, download as <code>.pweb</code> or <code>.zip</code>.</span>
+            </div>
+          </li>
+        </ul>
 
-    <div class="viewer-cta">
-      <a class="btn primary" href="/app/">Open the web app &rarr;</a>
-      <p class="viewer-install-note">
-        Install as a PWA in Chrome or Edge and <code>.pweb</code> files on your desktop
-        will open directly in the app &mdash; no extra steps.
-      </p>
+        <div class="viewer-cta">
+          <a class="btn primary" href="/app/">Open the web app &rarr;</a>
+          <p class="viewer-install-note">
+            Install it in Chrome or Edge and <code>.pweb</code> files open on double-click &mdash; no browser step.
+          </p>
+        </div>
+      </div>
+
+      <div class="app-mock" aria-hidden="true">
+        <div class="mock-rail">
+          <div class="mock-brand">
+            <svg viewBox="0 0 36 36" fill="none"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="#e8e8ff" opacity="0.32"/><rect x="7" y="11" width="22" height="6" rx="3" fill="#e8e8ff" opacity="0.6"/><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="#e8e8ff"/></svg>
+            <span class="mb-word">PortableWeb</span>
+          </div>
+          <div class="mock-label">Create</div>
+          <div class="mock-item"><span class="mi-ic"></span>New project</div>
+          <div class="mock-label">Developer tools</div>
+          <div class="mock-item"><span class="mi-ic"></span>Unpack</div>
+          <div class="mock-item"><span class="mi-ic"></span>Pack</div>
+          <div class="mock-item"><span class="mi-ic"></span>Validate</div>
+        </div>
+        <div class="mock-work">
+          <div class="mock-topbar"><span class="mock-crumb">PortableWeb / Home</span></div>
+          <div class="mock-body">
+            <div class="mock-hero">
+              <span class="mh-glyph"><svg viewBox="0 0 36 36" fill="none"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.3"/><rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.55"/><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/></svg></span>
+              <span class="mh-title">Open a bundle</span>
+              <span class="mh-sub">Drag a .pweb here, or choose</span>
+              <span class="mh-btn">Open .pweb file</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PortableWeb</title>
   <link rel="manifest" href="/app/manifest.json">
-  <meta name="theme-color" content="#1a1714">
+  <meta name="theme-color" content="#0f0f1a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="PortableWeb">
-  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+  <link rel="mask-icon" href="/icons/icon.svg" color="#7c3aed">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
     /* ── Reset & tokens ──────────────────────────────────────────────────── */
@@ -21,8 +28,9 @@
       --ink-soft:   #2d2d50;
       --paper:      #f7f8ff;
       --surface:    #edeeff;
-      --border:     rgba(15,15,26,0.10);
-      --border-mid: rgba(15,15,26,0.22);
+      --surface-2:  #e2e4f8;
+      --border:     rgba(15,15,26,0.09);
+      --border-mid: rgba(15,15,26,0.16);
       --accent:     #7c3aed;
       --accent2:    #2563eb;
       --accent3:    #20d6d2;
@@ -30,12 +38,19 @@
       --amber:      #d97706;
       --red:        #c0392b;
       --muted:      #6565a0;
-      --radius:     10px;
-      --gradient:   linear-gradient(135deg, #7c3aed 0%, #2563eb 46%, #20d6d2 100%);
-      --serif:      ui-serif, "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", serif;
-      --sans:       ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-      --mono:       ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
-      --shadow:     0 2px 12px rgba(15,15,26,0.10), 0 1px 3px rgba(15,15,26,0.07);
+      --radius:     12px;
+      --gradient:   linear-gradient(120deg, #7c3aed 0%, #2563eb 50%, #20d6d2 100%);
+      --sans:       "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono:       "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      --shadow-sm:  0 1px 2px rgba(15,15,26,0.06), 0 1px 1px rgba(15,15,26,0.04);
+      --shadow:     0 4px 24px rgba(15,15,26,0.10), 0 1px 3px rgba(15,15,26,0.06);
+
+      /* rail (always dark) */
+      --rail-bg:    #0c0c16;
+      --rail-line:  rgba(168,168,210,0.13);
+      --rail-text:  #e8e8ff;
+      --rail-dim:   rgba(168,168,210,0.62);
+      --rail-hover: rgba(168,168,210,0.09);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -43,11 +58,14 @@
         --ink:        #e8e8ff;
         --ink-soft:   #b0b0d8;
         --paper:      #08080f;
-        --surface:    #0f0f1e;
-        --border:     rgba(232,232,255,0.07);
-        --border-mid: rgba(232,232,255,0.16);
-        --muted:      #7070a8;
-        --shadow:     0 2px 16px rgba(0,0,0,0.5);
+        --surface:    #12121f;
+        --surface-2:  #1a1a2c;
+        --border:     rgba(232,232,255,0.08);
+        --border-mid: rgba(232,232,255,0.15);
+        --muted:      #7d7db0;
+        --shadow:     0 8px 32px rgba(0,0,0,0.55);
+        --shadow-sm:  0 1px 2px rgba(0,0,0,0.4);
+        --rail-bg:    #06060c;
       }
     }
 
@@ -60,656 +78,578 @@
       font-size: 15px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    #root { height: 100%; display: flex; flex-direction: column; }
-
-    /* ── Scrollable area ─────────────────────────────────────────────────── */
+    #root { height: 100%; display: flex; }
     .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-    /* ── View switching ──────────────────────────────────────────────────── */
-    .view { display: none; flex-direction: column; height: 100%; }
+    /* Scrollbar */
+    * { scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
+    ::-webkit-scrollbar { width: 13px; height: 13px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--muted);
+      border-radius: 10px;
+      border: 3px solid var(--paper);
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--ink-soft); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+
+    .view { display: none; height: 100%; width: 100%; }
     .view.active { display: flex; }
 
-    /* ── Dashboard ───────────────────────────────────────────────────────── */
-    #view-dashboard {
-      overflow: hidden;
-    }
+    /* glyph helper */
+    .glyph { display: block; flex-shrink: 0; color: currentColor; }
 
-    .dash-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 20px;
-      background: #0f0f1a;
-      border-bottom: none;
+    /* ════════════════════════════════════════════════════════════════════
+       SIDEBAR RAIL
+       ════════════════════════════════════════════════════════════════════ */
+    .rail {
+      width: 256px;
       flex-shrink: 0;
-    }
-
-    .dash-logo {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    .dash-wordmark {
-      font-family: var(--serif);
-      font-size: 17px;
-      font-weight: 400;
-      font-style: italic;
-      letter-spacing: -0.01em;
-      color: #e8e8ff;
-    }
-
-    .dash-badge {
-      margin-left: auto;
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(168,168,210,0.85);
-      padding: 3px 8px;
-      border: 1px solid rgba(168,168,210,0.25);
-      border-radius: 4px;
-    }
-
-    .dash-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 20px 40px;
+      background: var(--rail-bg);
+      color: var(--rail-text);
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      padding: 18px 14px 14px;
+      gap: 22px;
+      border-right: 1px solid var(--rail-line);
+      position: relative;
     }
-
-    /* ── Install / installed state banners ──────────────────────────────── */
-
-    /* Shown only when NOT installed (default); hidden in standalone mode */
-    .pre-install  { display: block; }
-    .post-install { display: none;  }
-
-    @media (display-mode: standalone), (display-mode: fullscreen) {
-      .pre-install  { display: none;  }
-      .post-install { display: block; }
-    }
-
-    .install-banner {
-      display: flex;
-      gap: 14px;
-      padding: 16px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border-mid);
-      border-radius: var(--radius);
-      border-left: 3px solid var(--accent);
-    }
-
-    .install-banner-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+    /* thin gradient hairline at the very top of the rail — the one place
+       the brand gradient lives in the chrome */
+    .rail::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: var(--gradient);
-      color: #fff;
+      opacity: 0.9;
+    }
+
+    .rail-brand {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      flex-shrink: 0;
+      gap: 11px;
+      text-decoration: none;
+      color: var(--rail-text);
+      padding: 6px 8px;
+      border-radius: 9px;
+      transition: background 0.14s;
     }
-
-    .install-banner-body { flex: 1; }
-
-    .install-banner-title {
-      font-size: 13px;
+    .rail-brand:hover { background: var(--rail-hover); }
+    .rail-brand .glyph { color: var(--rail-text); }
+    .rail-wordmark {
       font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 5px;
+      font-size: 18px;
+      letter-spacing: -0.022em;
+      line-height: 1;
+    }
+    .rail-ver {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--rail-dim);
+      border: 1px solid var(--rail-line);
+      border-radius: 5px;
+      padding: 3px 6px;
     }
 
-    .install-banner-desc {
+    .rail-nav { display: flex; flex-direction: column; gap: 3px; }
+    .rail-group-label {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--rail-dim);
+      padding: 0 10px;
+      margin: 14px 0 6px;
+    }
+    .rail-group-label:first-child { margin-top: 0; }
+
+    .rail-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 9px 10px;
+      border: none;
+      background: none;
+      color: var(--rail-text);
+      font-family: var(--sans);
+      font-size: 13.5px;
+      font-weight: 450;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.13s;
+    }
+    .rail-item:hover { background: var(--rail-hover); }
+    .rail-item:active { transform: translateY(0.5px); }
+    .rail-item .ri-icon {
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background: rgba(168,168,210,0.10);
+    }
+    .rail-item .ri-icon svg { display: block; }
+
+    .rail-spacer { flex: 1; }
+
+    .rail-foot { display: flex; flex-direction: column; gap: 4px; }
+    .rail-link {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      color: var(--rail-dim);
+      text-decoration: none;
       font-size: 12.5px;
-      color: var(--ink-soft);
-      line-height: 1.5;
-      margin-bottom: 10px;
+      border-radius: 8px;
+      transition: background 0.13s, color 0.13s;
     }
+    .rail-link:hover { background: var(--rail-hover); color: var(--rail-text); }
+    .rail-link .ext { margin-left: auto; font-size: 11px; opacity: 0.7; }
+    .rail-link.home { color: var(--rail-text); }
 
-    .install-banner-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .rail-divider { height: 1px; background: var(--rail-line); margin: 8px 4px; }
 
+    /* install state (compact, in rail foot) */
+    .rail-install { display: block; }
+    .post-install-rail { display: none; }
+    @media (display-mode: standalone), (display-mode: fullscreen) {
+      .rail-install   { display: none; }
+      .post-install-rail { display: flex; }
+      /* In an installed app, a "back to the website" link has no meaning */
+      .rail-link.home { display: none; }
+    }
     .btn-install {
-      padding: 6px 16px;
+      width: 100%;
+      padding: 9px 12px;
       background: var(--gradient);
       color: #fff;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-family: var(--mono);
       font-size: 10.5px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
       cursor: pointer;
       transition: opacity 0.15s;
     }
-    .btn-install:hover { opacity: 0.85; }
-
+    .btn-install:hover { opacity: 0.88; }
     .install-manual-hint {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 10px;
       font-size: 11.5px;
-      color: var(--muted);
-      line-height: 1.4;
+      line-height: 1.45;
+      color: var(--rail-dim);
+      border: 1px solid var(--rail-line);
+      border-radius: 8px;
     }
-    .install-manual-hint strong { color: var(--ink-soft); font-weight: 500; }
-
-    .installed-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 12px 16px;
-      background: rgba(5,150,105,0.07);
-      border: 1px solid rgba(5,150,105,0.25);
-      border-radius: var(--radius);
-      font-size: 13px;
-      color: var(--ink-soft);
-      line-height: 1.5;
+    .install-manual-hint strong { color: var(--rail-text); font-weight: 500; }
+    .post-install-rail {
+      align-items: center; gap: 8px;
+      padding: 9px 10px;
+      font-size: 11.5px; line-height: 1.45;
+      color: var(--rail-dim);
+      border: 1px solid rgba(5,150,105,0.3);
+      background: rgba(5,150,105,0.08);
+      border-radius: 8px;
     }
+    .post-install-rail .ck { color: #2ee6a6; font-weight: 700; flex-shrink: 0; }
 
-    .installed-check {
-      color: var(--green);
-      font-weight: 700;
-      font-size: 14px;
+    /* ════════════════════════════════════════════════════════════════════
+       WORKSPACE
+       ════════════════════════════════════════════════════════════════════ */
+    .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--paper); }
+
+    .ws-bar {
+      height: 52px;
       flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    /* ── Compact open section ────────────────────────────────────────────── */
-
-    .open-section {
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--border);
     }
-
-    .btn-open-file {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 20px;
-      background: var(--gradient);
-      color: #fff;
+    .ws-crumb {
+      display: flex; align-items: center; gap: 8px;
       font-family: var(--mono);
       font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .btn-open-file:hover { opacity: 0.85; }
-
-    .btn-generate {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 20px;
-      background: transparent;
-      color: var(--accent);
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      border: 1.5px solid var(--accent);
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .btn-generate:hover { background: var(--accent); color: #fff; }
-
-    .open-drag-hint {
-      font-size: 12px;
+      letter-spacing: 0.04em;
       color: var(--muted);
     }
-
-    /* ── Privacy note ────────────────────────────────────────────────────── */
-
-    .privacy-note {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 10px 14px;
-      background: var(--surface);
-      border-radius: var(--radius);
-      font-size: 12px;
+    .ws-crumb .sep { opacity: 0.5; }
+    .ws-crumb .cur { color: var(--ink); }
+    .ws-bar-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+    .ws-toplink {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 12px;
+      font-size: 12.5px;
       color: var(--muted);
-      line-height: 1.5;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.13s, color 0.13s;
     }
+    .ws-toplink:hover { background: var(--surface); color: var(--ink); }
 
-    .privacy-note-icon {
-      flex-shrink: 0;
-      font-size: 13px;
-      margin-top: 1px;
-    }
-
-    /* Tool grid */
-    .tools-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .tool-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-
-    @media (min-width: 540px) {
-      .tool-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    .tool-card {
+    .ws-body {
+      flex: 1;
+      padding: 40px 28px 48px;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 16px;
+      align-items: center;
+    }
+    .ws-col {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin: auto 0;
+    }
+
+    /* install banner (workspace, pre-install) */
+    .install-banner {
+      display: flex;
+      gap: 13px;
+      padding: 14px 16px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      cursor: pointer;
-      text-align: left;
-      transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
-      font-family: inherit;
     }
-    .tool-card:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow);
-      border-color: var(--border-mid);
-    }
-    .tool-card:active { transform: translateY(0); }
-
-    .tool-icon {
-      width: 32px;
-      height: 32px;
+    .pre-install  { display: block; }
+    @media (display-mode: standalone), (display-mode: fullscreen) { .pre-install { display: none; } }
+    .install-banner-icon {
+      width: 30px; height: 30px;
       border-radius: 8px;
+      background: var(--gradient);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .install-banner-body { flex: 1; }
+    .install-banner-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .install-banner-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+    .install-banner-desc code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+    /* hero open zone */
+    .hero-open {
+      position: relative;
+      background: var(--surface);
+      border: 1.5px dashed var(--border-mid);
+      border-radius: 18px;
+      padding: 48px 36px;
+      text-align: center;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      font-size: 16px;
+      gap: 6px;
+      transition: border-color 0.18s, background 0.18s;
     }
-
-    .tool-name {
-      font-size: 13px;
-      font-weight: 500;
+    .hero-open .hero-glyph {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
       color: var(--ink);
-      line-height: 1.2;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
     }
-    .tool-desc {
-      font-size: 11.5px;
+    .hero-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .hero-sub {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      max-width: 34ch;
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    .btn-open-file {
+      display: inline-flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+      padding: 11px 22px;
+      background: var(--gradient);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 13.5px;
+      font-weight: 550;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 2px 14px rgba(124,58,237,0.28);
+    }
+    .btn-open-file:hover { opacity: 0.92; }
+    .btn-open-file:active { transform: translateY(1px); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 7px;
+      white-space: nowrap;
+      padding: 11px 18px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid var(--border-mid);
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.13s, border-color 0.13s;
+    }
+    .btn-secondary:hover { background: var(--surface-2); border-color: var(--muted); }
+
+    .hero-hint {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.03em;
       color: var(--muted);
-      line-height: 1.4;
+      margin-top: 16px;
     }
 
-
-    /* ── Viewer ──────────────────────────────────────────────────────────── */
-    #view-viewer {
-      background: #000;
+    .privacy-note {
+      display: flex; align-items: center; gap: 9px;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      text-align: center;
     }
+    .privacy-note svg { flex-shrink: 0; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       VIEWER
+       ════════════════════════════════════════════════════════════════════ */
+    #view-viewer { background: #000; flex-direction: column; }
+    /* Bundle content takes over the full window — hide the rail while viewing */
+    #root:has(#view-viewer.active) .rail { display: none; }
 
     .viewer-toolbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 10px 0 14px;
-      height: 28px;
-      background: #0f0f1a;
-      border-bottom: none;
+      gap: 10px;
+      padding: 0 8px 0 14px;
+      height: 38px;
+      background: var(--rail-bg);
+      border-bottom: 1px solid var(--rail-line);
       flex-shrink: 0;
-      gap: 8px;
     }
-
+    .viewer-brand { display: flex; align-items: center; gap: 8px; color: var(--rail-text); }
+    .viewer-brand .glyph { color: var(--rail-text); }
+    .viewer-brand .vb-sep { width: 1px; height: 16px; background: var(--rail-line); margin: 0 2px; }
     .viewer-title {
       flex: 1;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.04em;
-      color: rgba(168,168,210,0.75);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--rail-text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
-    .btn-close {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border: none;
-      background: none;
-      color: rgba(168,168,210,0.6);
-      font-size: 13px;
+    .tb-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px;
+      height: 26px; min-width: 26px;
+      padding: 0 8px;
+      border: none; background: none;
+      color: var(--rail-dim);
+      font-family: var(--sans);
+      font-size: 12px;
       cursor: pointer;
-      border-radius: 4px;
-      flex-shrink: 0;
-      transition: background 0.1s, color 0.1s;
+      border-radius: 6px;
+      transition: background 0.12s, color 0.12s;
     }
-    .btn-close:hover { background: rgba(255,255,255,0.08); color: #e8e8ff; }
+    .tb-btn:hover { background: rgba(255,255,255,0.09); color: var(--rail-text); }
 
-    .viewer-frame-wrap {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
+    .viewer-frame-wrap { flex: 1; position: relative; overflow: hidden; }
+    #viewer-frame { width: 100%; height: 100%; border: none; display: block; background: #fff; }
 
-    #viewer-frame {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-      background: #fff;
-    }
-
-    /* ── Drop overlay (full-window) ──────────────────────────────────────── */
+    /* ── Drop overlay ────────────────────────────────────────────────────── */
     #drop-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(124,58,237,0.12);
-      backdrop-filter: blur(2px);
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(124,58,237,0.14);
+      backdrop-filter: blur(3px);
+      align-items: center; justify-content: center;
+      pointer-events: none; padding: 24px;
     }
     #drop-overlay.active { display: flex; }
-
     .drop-overlay-inner {
       background: var(--paper);
       border: 2px dashed var(--accent);
-      border-radius: 16px;
-      padding: 48px 56px;
+      border-radius: 18px;
+      padding: 44px 52px;
       text-align: center;
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 22px;
+      font-size: 18px; font-weight: 600;
+      letter-spacing: -0.01em;
       color: var(--accent);
       box-shadow: var(--shadow);
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
     }
 
-    /* ── Loading overlay ─────────────────────────────────────────────────── */
+    /* ── Loading ─────────────────────────────────────────────────────────── */
     #loading {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 900;
-      background: rgba(244,237,224,0.88);
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 14px;
+      display: none; position: fixed; inset: 0; z-index: 900;
+      background: rgba(247,248,255,0.9);
+      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
     }
     #loading.active { display: flex; }
-
     @media (prefers-color-scheme: dark) {
-      #loading { background: rgba(8,8,15,0.9); }
-      #drop-overlay { background: rgba(124,58,237,0.18); }
+      #loading { background: rgba(8,8,15,0.92); }
+      #drop-overlay { background: rgba(124,58,237,0.2); }
     }
-
     .spinner {
-      width: 32px;
-      height: 32px;
+      width: 30px; height: 30px;
       border: 2.5px solid var(--border-mid);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-msg {
-      font-size: 13px;
-      color: var(--muted);
-      font-family: var(--mono);
-      letter-spacing: 0.06em;
-    }
+    .loading-msg { font-size: 12.5px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.05em; }
 
     /* ── Toast ───────────────────────────────────────────────────────────── */
     #toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
+      position: fixed; bottom: 24px; left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: var(--ink);
-      color: var(--paper);
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: var(--mono);
-      white-space: nowrap;
+      background: var(--ink); color: var(--paper);
+      padding: 11px 18px; border-radius: 10px;
+      font-size: 13px; font-family: var(--mono);
       z-index: 2000;
       transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s;
-      opacity: 0;
-      pointer-events: none;
-      max-width: calc(100vw - 40px);
-      white-space: normal;
-      text-align: center;
-    }
-    #toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    #toast.error { background: var(--red); }
-
-    /* ── Dialog / Modal ──────────────────────────────────────────────────── */
-    dialog {
-      background: var(--paper);
-      color: var(--ink);
-      border: 1px solid var(--border-mid);
-      border-radius: 14px;
-      padding: 0;
-      width: min(480px, calc(100vw - 32px));
-      max-height: calc(100vh - 64px);
-      overflow-y: auto;
+      opacity: 0; pointer-events: none;
+      max-width: calc(100vw - 40px); text-align: center;
       box-shadow: var(--shadow);
     }
-    dialog::backdrop {
-      background: rgba(26,23,20,0.4);
-      backdrop-filter: blur(2px);
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.error { background: var(--red); color: #fff; }
+    @media (prefers-color-scheme: dark) { #toast { background: var(--surface-2); color: var(--ink); } }
+
+    /* ── Dialog ──────────────────────────────────────────────────────────── */
+    dialog {
+      background: var(--paper); color: var(--ink);
+      border: 1px solid var(--border-mid); border-radius: 16px;
+      padding: 0; width: min(480px, calc(100vw - 32px));
+      max-height: calc(100vh - 64px); overflow-y: auto;
+      box-shadow: var(--shadow);
     }
-    @media (prefers-color-scheme: dark) {
-      dialog::backdrop { background: rgba(0,0,0,0.6); }
-    }
+    dialog::backdrop { background: rgba(12,12,22,0.5); backdrop-filter: blur(3px); }
 
     .dialog-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
     }
-    .dialog-title {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 18px;
-    }
+    .dialog-title { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
     .dialog-close {
-      width: 28px; height: 28px;
-      border: none; background: none;
-      color: var(--muted);
-      font-size: 20px;
-      cursor: pointer;
-      border-radius: 5px;
+      width: 28px; height: 28px; border: none; background: none;
+      color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.12s;
     }
     .dialog-close:hover { background: var(--surface); color: var(--ink); }
-
     .dialog-body { padding: 20px; }
 
-    /* Form */
-    .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
-    .form-label { font-size: 11px; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-label { font-size: 11px; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     .form-input {
-      padding: 8px 12px;
-      border: 1px solid var(--border-mid);
-      border-radius: 6px;
-      background: var(--surface);
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 14px;
-      transition: border-color 0.12s;
-      width: 100%;
+      padding: 9px 12px; border: 1px solid var(--border-mid); border-radius: 8px;
+      background: var(--surface); color: var(--ink);
+      font-family: var(--sans); font-size: 14px; width: 100%;
+      transition: border-color 0.12s, box-shadow 0.12s;
     }
-    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
     .form-input::placeholder { color: var(--muted); }
-
     .form-hint { font-size: 11px; color: var(--muted); }
 
-    /* Format toggle */
-    .format-toggle {
-      display: flex;
-      gap: 0;
-      border: 1px solid var(--border-mid);
-      border-radius: 6px;
-      overflow: hidden;
-    }
+    .format-toggle { display: flex; border: 1px solid var(--border-mid); border-radius: 8px; overflow: hidden; }
     .format-toggle input[type="radio"] { display: none; }
     .format-toggle label {
-      flex: 1;
-      padding: 7px 12px;
-      text-align: center;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      color: var(--muted);
-      background: var(--surface);
-      border-right: 1px solid var(--border-mid);
-      transition: background 0.12s, color 0.12s;
-      user-select: none;
+      flex: 1; padding: 9px 12px; text-align: center;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+      cursor: pointer; color: var(--muted); background: var(--surface);
+      border-right: 1px solid var(--border-mid); transition: background 0.12s, color 0.12s; user-select: none;
     }
     .format-toggle label:last-of-type { border-right: none; }
-    .format-toggle input[type="radio"]:checked + label {
-      background: var(--ink);
-      color: var(--paper);
-    }
-    .format-toggle label .fmt-ext {
-      font-weight: 600;
-    }
-    .format-toggle label .fmt-hint {
-      display: block;
-      font-size: 9.5px;
-      letter-spacing: 0.04em;
-      text-transform: none;
-      margin-top: 1px;
-      opacity: 0.7;
-    }
+    .format-toggle input[type="radio"]:checked + label { background: var(--ink); color: var(--paper); }
+    .format-toggle label .fmt-ext { font-weight: 600; }
+    .format-toggle label .fmt-hint { display: block; font-size: 9.5px; letter-spacing: 0.02em; text-transform: none; margin-top: 2px; opacity: 0.75; }
 
     .dialog-footer {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      padding: 14px 20px 18px;
-      border-top: 1px solid var(--border);
+      display: flex; gap: 8px; justify-content: flex-end;
+      padding: 14px 20px 18px; border-top: 1px solid var(--border);
     }
-
     .btn-primary {
-      padding: 8px 20px;
-      background: var(--gradient);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.12s;
+      padding: 9px 20px; background: var(--gradient); color: #fff;
+      border: none; border-radius: 8px;
+      font-family: var(--sans); font-size: 13px; font-weight: 550;
+      cursor: pointer; transition: opacity 0.12s;
     }
-    .btn-primary:hover { opacity: 0.85; }
-
+    .btn-primary:hover { opacity: 0.9; }
     .btn-ghost {
-      padding: 8px 16px;
-      background: none;
-      color: var(--muted);
-      border: 1px solid var(--border-mid);
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.12s;
+      padding: 9px 16px; background: none; color: var(--muted);
+      border: 1px solid var(--border-mid); border-radius: 8px;
+      font-family: var(--sans); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: background 0.12s;
     }
     .btn-ghost:hover { background: var(--surface); color: var(--ink); }
 
-    /* Validation results */
-    .validate-score {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 14px;
-      border-radius: 7px;
-      margin-bottom: 14px;
-    }
+    .validate-score { font-family: var(--mono); font-size: 13px; font-weight: 600; padding: 11px 14px; border-radius: 9px; margin-bottom: 14px; }
     .validate-score.pass { background: rgba(5,150,105,0.1); color: var(--green); }
     .validate-score.fail { background: rgba(192,57,43,0.1); color: var(--red); }
-
     .validate-list { display: flex; flex-direction: column; gap: 6px; }
-
-    .validate-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      background: var(--surface);
-    }
-    .validate-item.ok { }
+    .validate-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; background: var(--surface); }
     .validate-item.fail { background: rgba(192,57,43,0.06); }
-
-    .validate-icon {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
+    .validate-icon { font-family: var(--mono); font-size: 13px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
     .validate-item.ok .validate-icon { color: var(--green); }
     .validate-item.fail .validate-icon { color: var(--red); }
 
-    /* Bundle info panel */
     .info-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .info-table td { padding: 7px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
-    .info-table td:first-child {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      width: 36%;
-      padding-right: 12px;
-    }
+    .info-table td { padding: 8px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table td:first-child { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; width: 36%; padding-right: 12px; }
     .info-table tr:last-child td { border-bottom: none; }
-
-    /* Permissions badge list */
     .perm-list { display: flex; flex-wrap: wrap; gap: 4px; }
-    .perm-badge {
-      font-family: var(--mono);
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: var(--surface);
-      border: 1px solid var(--border-mid);
-      color: var(--ink-soft);
-    }
+    .perm-badge { font-family: var(--mono); font-size: 10px; padding: 3px 7px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border-mid); color: var(--ink-soft); }
 
-    /* ── Responsive tweaks ───────────────────────────────────────────────── */
-    @media (max-width: 400px) {
-      .dash-body { padding: 16px 14px 32px; gap: 20px; }
+    /* ════════════════════════════════════════════════════════════════════
+       RESPONSIVE — rail collapses to a top bar
+       ════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 820px) {
+      html, body { overflow: auto; }
+      #root { flex-direction: column; height: auto; min-height: 100%; }
+      .view.active { flex-direction: column; }
+      #view-dashboard.view.active { display: flex; }
+
+      .rail {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 4px;
+        padding: 10px 12px;
+        border-right: none;
+        border-bottom: 1px solid var(--rail-line);
+      }
+      .rail-brand { margin-right: auto; }
+      .rail-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; width: 100%; }
+      .rail-group-label { width: 100%; margin: 8px 0 2px; }
+      .rail-item { width: auto; padding: 7px 12px 7px 8px; background: var(--rail-hover); }
+      .rail-spacer { display: none; }
+      .rail-foot { flex-direction: row; flex-wrap: wrap; width: 100%; gap: 6px; }
+      .rail-foot .rail-divider { display: none; }
+      .rail-link { flex: 0 0 auto; }
+      .rail-install, .install-manual-hint, .post-install-rail { flex: 1 1 200px; }
+
+      .workspace { min-height: 60vh; }
+      .ws-body { padding: 28px 18px 40px; }
+      .ws-col { margin: 0 auto; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -722,112 +662,160 @@
 
 <div id="root">
 
-  <!-- ── Dashboard ───────────────────────────────────────────────────────── -->
-  <div id="view-dashboard" class="view active">
-    <div class="dash-header">
-      <img src="/icons/icon.svg" class="dash-logo" alt="">
-      <span class="dash-wordmark">PortableWeb</span>
-      <span class="dash-badge">v0.1</span>
+  <!-- ════════════════ SIDEBAR RAIL ════════════════ -->
+  <aside class="rail">
+    <a class="rail-brand" href="../index.html" title="Open the website" target="_blank" rel="noopener">
+      <svg class="glyph" width="26" height="26" viewBox="0 0 36 36" aria-hidden="true">
+        <rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.32"/>
+        <rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.6"/>
+        <rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/>
+      </svg>
+      <span class="rail-wordmark">PortableWeb</span>
+      <span class="rail-ver">v0.1</span>
+    </a>
+
+    <nav class="rail-nav">
+      <div class="rail-group-label">Create</div>
+      <button class="rail-item" id="btn-new">
+        <span class="ri-icon">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="13" height="13" rx="3" stroke="#a78bfa" stroke-width="1.5"/><path d="M9 6v6M6 9h6" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        New project
+      </button>
+
+      <div class="rail-group-label">Developer tools</div>
+      <button class="rail-item" id="btn-unpack">
+        <span class="ri-icon">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2.5" y="10" width="13" height="5.5" rx="1.5" stroke="#7cb8ff" stroke-width="1.5"/><path d="M9 2.5v7M6.2 7l2.8 2.8L11.8 7" stroke="#7cb8ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Unpack
+      </button>
+      <button class="rail-item" id="btn-pack">
+        <span class="ri-icon">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="13" height="5.5" rx="1.5" stroke="#a78bfa" stroke-width="1.5"/><path d="M9 15.5v-7M6.2 11l2.8-2.8L11.8 11" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Pack
+      </button>
+      <button class="rail-item" id="btn-validate">
+        <span class="ri-icon">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6.5" stroke="#3ad6b0" stroke-width="1.5"/><path d="M6.2 9l2 2 3.6-3.8" stroke="#3ad6b0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Validate
+      </button>
+    </nav>
+
+    <div class="rail-spacer"></div>
+
+    <div class="rail-foot">
+      <!-- install state -->
+      <div class="rail-install">
+        <button class="btn-install" id="btn-install" hidden>Install app</button>
+        <div class="install-manual-hint" id="install-manual-hint">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M2.5 12v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span>Install to open <strong>.pweb</strong> files by double-click.</span>
+        </div>
+      </div>
+      <div class="post-install-rail">
+        <span class="ck" aria-hidden="true">&#10003;</span>
+        <span>Installed. Double-click any <strong>.pweb</strong> to open it here.</span>
+      </div>
+
+      <div class="rail-divider"></div>
+
+      <a class="rail-link" href="https://github.com/portableweb" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Spec on GitHub
+        <span class="ext">&#8599;</span>
+      </a>
+      <a class="rail-link home" href="../index.html">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3.5L5.5 8 10 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to home
+      </a>
     </div>
+  </aside>
 
-    <div class="dash-body scroll">
+  <!-- ════════════════ WORKSPACE ════════════════ -->
+  <div id="view-dashboard" class="view active workspace">
+    <header class="ws-bar">
+      <div class="ws-crumb">
+        <span>PortableWeb</span>
+        <span class="sep">/</span>
+        <span class="cur">Home</span>
+      </div>
+      <div class="ws-bar-actions">
+        <a class="ws-toplink" href="../index.html" target="_blank" rel="noopener">
+          About the format
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 10l6-6M5 4h5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </header>
 
-      <!-- Pre-install: shown only when app is not installed as PWA -->
-      <div class="pre-install">
-        <div class="install-banner">
-          <div class="install-banner-icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <div class="ws-body scroll">
+      <div class="ws-col">
+
+        <!-- pre-install banner -->
+        <div class="pre-install">
+          <div class="install-banner">
+            <div class="install-banner-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M2.5 12v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div class="install-banner-body">
+              <div class="install-banner-title">Install PortableWeb for the full experience</div>
+              <p class="install-banner-desc">Once installed, double-clicking any <code>.pweb</code> file on your computer opens it directly in this app.</p>
+            </div>
           </div>
-          <div class="install-banner-body">
-            <div class="install-banner-title">Install for the full experience</div>
-            <p class="install-banner-desc">
-              Once installed, double-clicking any <code style="font-family:var(--mono);font-size:0.85em;background:var(--border);padding:1px 4px;border-radius:3px">.pweb</code> file on your computer opens it directly in this app — no browser navigation needed.
-            </p>
-            <div class="install-banner-actions">
-              <button class="btn-install" id="btn-install" hidden>Install PortableWeb</button>
-              <span class="install-manual-hint" id="install-manual-hint">
-                Use your browser&rsquo;s address bar icon or
-                <strong>menu &rarr; Install app</strong> to install.
-              </span>
-            </div>
+        </div>
+
+        <!-- hero open zone -->
+        <section class="hero-open" id="hero-open">
+          <div class="hero-glyph" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 36 36">
+              <rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.3"/>
+              <rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.55"/>
+              <rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/>
+            </svg>
           </div>
+          <div class="hero-title">Open a bundle</div>
+          <p class="hero-sub">Drag a <code style="font-family:var(--mono);font-size:0.9em">.pweb</code> file anywhere onto this window, or choose one to open it sandboxed.</p>
+          <div class="hero-actions">
+            <button class="btn-open-file" id="btn-open">
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 8.5v1.25A.75.75 0 002.25 10.5h7.5a.75.75 0 00.75-.75V8.5M6 1.5v6M3.5 5l2.5 2.5L8.5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Open .pweb file
+            </button>
+            <button class="btn-secondary" id="btn-generate">
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v4M4 6h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Generate a sample
+            </button>
+          </div>
+          <div class="hero-hint" id="open-drag-hint">or drop a file anywhere on this window</div>
+        </section>
+
+        <!-- privacy -->
+        <div class="privacy-note">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.3"/></svg>
+          <span>Everything runs locally. Nothing you open, pack, or validate is ever uploaded.</span>
         </div>
+
       </div>
-
-      <!-- Post-install: shown only when running as installed PWA -->
-      <div class="post-install">
-        <div class="installed-banner">
-          <span class="installed-check" aria-hidden="true">&#10003;</span>
-          <span>Double-click any <code style="font-family:var(--mono);font-size:0.85em">.pweb</code> file on your computer to open it directly in this app.</span>
-        </div>
-      </div>
-
-      <!-- Open file -->
-      <div class="open-section">
-        <button class="btn-open-file" id="btn-open">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 8.5v1.25A.75.75 0 002.25 10.5h7.5a.75.75 0 00.75-.75V8.5M6 1.5v6M3.5 5l2.5 2.5L8.5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Open .pweb file
-        </button>
-        <button class="btn-generate" id="btn-generate">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v4M4 6h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-          Generate .pweb
-        </button>
-        <span class="open-drag-hint" id="open-drag-hint">or drag a .pweb anywhere on this window</span>
-      </div>
-
-      <!-- Privacy note -->
-      <div class="privacy-note">
-        <span class="privacy-note-icon" aria-hidden="true">&#128274;</span>
-        <span>Everything runs locally on your device. Opening, packing, validating, and generating bundles does not upload or transfer any data.</span>
-      </div>
-
-      <!-- Developer tools -->
-      <section>
-        <div class="tools-label">Developer tools</div>
-        <div class="tool-grid">
-          <button class="tool-card" id="btn-unpack">
-            <div class="tool-icon" style="background:rgba(37,99,235,0.12);">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2" y="10" width="14" height="6" rx="1.5" stroke="#2563eb" stroke-width="1.4"/><path d="M9 2v8M6 7l3 3 3-3" stroke="#2563eb" stroke-width="1.4" stroke-linecap="round"/></svg>
-            </div>
-            <div class="tool-name">Unpack</div>
-            <div class="tool-desc">Extract .pweb to a zip for editing</div>
-          </button>
-
-          <button class="tool-card" id="btn-pack">
-            <div class="tool-icon" style="background:rgba(124,58,237,0.12);">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2" y="2" width="14" height="6" rx="1.5" stroke="#7c3aed" stroke-width="1.4"/><path d="M9 16V8M6 11l3-3 3 3" stroke="#7c3aed" stroke-width="1.4" stroke-linecap="round"/></svg>
-            </div>
-            <div class="tool-name">Pack</div>
-            <div class="tool-desc">Folder &rarr; .pweb bundle</div>
-          </button>
-
-          <button class="tool-card" id="btn-validate">
-            <div class="tool-icon" style="background:rgba(5,150,105,0.12);">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="#059669" stroke-width="1.4"/><path d="M6 9l2 2 4-4" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="tool-name">Validate</div>
-            <div class="tool-desc">Check a .pweb against the spec</div>
-          </button>
-
-          <button class="tool-card" id="btn-new">
-            <div class="tool-icon" style="background:rgba(217,119,6,0.12);">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2" y="2" width="14" height="14" rx="2" stroke="#d97706" stroke-width="1.4"/><path d="M9 6v6M6 9h6" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </div>
-            <div class="tool-name">New Project</div>
-            <div class="tool-desc">Scaffold a starter .pweb</div>
-          </button>
-        </div>
-      </section>
-
-
     </div>
   </div>
 
-  <!-- ── Viewer ───────────────────────────────────────────────────────────── -->
+  <!-- ════════════════ VIEWER ════════════════ -->
   <div id="view-viewer" class="view">
     <div class="viewer-toolbar" id="viewer-toolbar">
+      <span class="viewer-brand" aria-hidden="true">
+        <svg class="glyph" width="18" height="18" viewBox="0 0 36 36"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.32"/><rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.6"/><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/></svg>
+        <span class="vb-sep"></span>
+      </span>
       <span class="viewer-title" id="viewer-title"></span>
-      <button class="btn-close" id="btn-back" title="Back to home" aria-label="Back to home">&#x2715;</button>
+      <button class="tb-btn" id="btn-info" title="Bundle info">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5.1" r="0.9" fill="currentColor"/></svg>
+        Info
+      </button>
+      <button class="tb-btn" id="btn-back" title="Close & return home" aria-label="Close bundle">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Close
+      </button>
     </div>
     <div class="viewer-frame-wrap">
       <iframe
@@ -843,7 +831,10 @@
 
 <!-- ── Full-window drop overlay ──────────────────────────────────────────── -->
 <div id="drop-overlay" aria-hidden="true">
-  <div class="drop-overlay-inner">Drop .pweb to open</div>
+  <div class="drop-overlay-inner">
+    <svg width="34" height="34" viewBox="0 0 36 36" style="color:var(--accent)"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.3"/><rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.55"/><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/></svg>
+    Drop .pweb to open
+  </div>
 </div>
 
 <!-- ── Loading overlay ───────────────────────────────────────────────────── -->
@@ -858,7 +849,7 @@
 <!-- ── New Project dialog ────────────────────────────────────────────────── -->
 <dialog id="dialog-new" aria-labelledby="new-title">
   <div class="dialog-header">
-    <span class="dialog-title" id="new-title">New .pweb Project</span>
+    <span class="dialog-title" id="new-title">New .pweb project</span>
     <button class="dialog-close" data-close="dialog-new" aria-label="Close">&times;</button>
   </div>
   <form id="form-new" method="dialog">
@@ -898,7 +889,7 @@
     </div>
     <div class="dialog-footer">
       <button type="button" class="btn-ghost" data-close="dialog-new">Cancel</button>
-      <button type="submit" class="btn-primary">Generate &amp; Download</button>
+      <button type="submit" class="btn-primary">Generate &amp; download</button>
     </div>
   </form>
 </dialog>
@@ -932,7 +923,7 @@
     </div>
     <div class="dialog-footer">
       <button type="button" class="btn-ghost" data-close="dialog-pack-manifest">Cancel</button>
-      <button type="submit" class="btn-primary">Continue Packing</button>
+      <button type="submit" class="btn-primary">Continue packing</button>
     </div>
   </form>
 </dialog>
@@ -954,7 +945,7 @@
 <!-- ── Bundle info dialog ────────────────────────────────────────────────── -->
 <dialog id="dialog-info" aria-labelledby="info-title">
   <div class="dialog-header">
-    <span class="dialog-title" id="info-title">Bundle Info</span>
+    <span class="dialog-title" id="info-title">Bundle info</span>
     <button class="dialog-close" data-close="dialog-info" aria-label="Close">&times;</button>
   </div>
   <div class="dialog-body">
@@ -965,817 +956,7 @@
   </div>
 </dialog>
 
-<script src="/app/jszip.min.js"></script>
-<script>
-/* ── PortableWeb PWA app ─────────────────────────────────────────────────── */
-const App = (() => {
-  /* State */
-  let currentBundle = null; // { manifest, sessionId }
-  let openedViaFileHandler = false;
-
-  /* ── Helpers ─────────────────────────────────────────────────────────── */
-
-  const $ = (id) => document.getElementById(id);
-  const el = (tag, attrs = {}, children = []) => {
-    const e = document.createElement(tag);
-    Object.entries(attrs).forEach(([k, v]) => {
-      if (k === 'class') e.className = v;
-      else if (k.startsWith('data-')) e.dataset[k.slice(5)] = v;
-      else e[k] = v;
-    });
-    children.forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
-    return e;
-  };
-
-  function showToast(msg, isError = false) {
-    const t = $('toast');
-    t.textContent = msg;
-    t.className = isError ? 'error' : '';
-    t.classList.add('show');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove('show'), isError ? 5000 : 3000);
-  }
-
-  function showError(msg) { showToast(msg, true); }
-
-  function showLoading(msg = 'Loading…') {
-    $('loading-msg').textContent = msg;
-    $('loading').classList.add('active');
-  }
-
-  function hideLoading() { $('loading').classList.remove('active'); }
-
-  function setView(name) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    $('view-' + name).classList.add('active');
-  }
-
-  function downloadBlob(blob, name) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-
-  /* ── IndexedDB helpers ────────────────────────────────────────────────── */
-
-  function openIDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open('portableweb', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('bundle-files');
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function storeBundle(sessionId, entries) {
-    const db = await openIDB();
-    const tx = db.transaction('bundle-files', 'readwrite');
-    const store = tx.objectStore('bundle-files');
-    for (const { path, data, mime } of entries) {
-      store.put({ data, mime }, `${sessionId}/${path}`);
-    }
-    await new Promise((resolve, reject) => {
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
-  }
-
-  function clearBundle(sessionId) {
-    openIDB().then(db => {
-      const tx = db.transaction('bundle-files', 'readwrite');
-      tx.objectStore('bundle-files').delete(
-        IDBKeyRange.bound(`${sessionId}/`, `${sessionId}/￿`)
-      );
-      tx.oncomplete = () => db.close();
-    }).catch(() => {});
-  }
-
-  function getMime(path) {
-    const ext = (path.split('.').pop() || '').toLowerCase();
-    return {
-      html: 'text/html', htm: 'text/html',
-      css: 'text/css',
-      js: 'application/javascript', mjs: 'application/javascript', cjs: 'application/javascript',
-      json: 'application/json',
-      svg: 'image/svg+xml',
-      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
-      gif: 'image/gif', webp: 'image/webp', avif: 'image/avif',
-      ico: 'image/x-icon',
-      woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', otf: 'font/otf',
-      mp3: 'audio/mpeg', mp4: 'video/mp4', webm: 'video/webm',
-      ogg: 'audio/ogg', wav: 'audio/wav',
-      txt: 'text/plain', md: 'text/markdown',
-    }[ext] || 'application/octet-stream';
-  }
-
-  /* Open a file picker that returns a File promise */
-  function pickFile(accept) {
-    return new Promise((resolve) => {
-      const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = accept;
-      inp.addEventListener('change', () => resolve(inp.files[0] || null));
-      inp.click();
-    });
-  }
-
-  /* ── Bundle open ──────────────────────────────────────────────────────── */
-
-  async function openBundle(file) {
-    if (!('serviceWorker' in navigator)) {
-      showError('Your browser must support Service Workers to open .pweb bundles.');
-      return;
-    }
-
-    // The SW must be controlling this page before we set the iframe src,
-    // otherwise it won't intercept /app/bundle/* requests.
-    // On first load the SW installs and claims via clients.claim() — wait for it.
-    if (!navigator.serviceWorker.controller) {
-      await Promise.race([
-        new Promise(resolve =>
-          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })
-        ),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Viewer timed out initialising. Please reload and try again.')), 8000)
-        ),
-      ]);
-    }
-
-    showLoading('Opening bundle…');
-    try {
-      const zip = await JSZip.loadAsync(await file.arrayBuffer());
-
-      /* Parse manifest */
-      const mf = zip.file('manifest.json');
-      if (!mf) throw new Error('Invalid bundle: missing manifest.json');
-      const manifest = JSON.parse(await mf.async('text'));
-      for (const k of ['spec_version', 'title', 'entry']) {
-        if (!manifest[k]) throw new Error(`manifest.json is missing required field: "${k}"`);
-      }
-
-      /* Extract every file and store in IndexedDB */
-      const sessionId = crypto.randomUUID
-        ? crypto.randomUUID()
-        : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      const entries = [];
-      await Promise.all(
-        Object.values(zip.files)
-          .filter(entry => !entry.dir)
-          .map(entry =>
-            entry.async('uint8array').then(data => {
-              entries.push({ path: entry.name, data, mime: getMime(entry.name) });
-            })
-          )
-      );
-
-      await storeBundle(sessionId, entries);
-
-      /* Clear previous session */
-      if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
-
-      currentBundle = { manifest, sessionId, filename: file.name };
-      showViewer();
-    } catch (e) {
-      showError(e.message);
-    } finally {
-      hideLoading();
-    }
-  }
-
-  function showViewer() {
-    const { manifest, sessionId } = currentBundle;
-    const toolbar = $('viewer-toolbar');
-
-    if (openedViaFileHandler) {
-      /* Opened via OS double-click — no toolbar, window title = bundle title */
-      document.title = manifest.title;
-      if (toolbar) toolbar.style.display = 'none';
-    } else {
-      /* Opened from inside the app — show toolbar with bundle name, window = PortableWeb */
-      document.title = 'PortableWeb';
-      const titleEl = $('viewer-title');
-      if (titleEl) titleEl.textContent = manifest.title;
-      if (toolbar) toolbar.style.display = 'flex';
-    }
-
-    $('viewer-frame').src = `/app/bundle/${sessionId}/${manifest.entry}`;
-    setView('viewer');
-  }
-
-  function closeViewer() {
-    $('viewer-frame').src = 'about:blank';
-    if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
-    currentBundle = null;
-    openedViaFileHandler = false;
-    document.title = 'PortableWeb';
-    setView('dashboard');
-  }
-
-  /* ── Developer tools ──────────────────────────────────────────────────── */
-
-  async function doUnpack() {
-    const file = await pickFile('.pweb,application/vnd.portableweb+zip');
-    if (!file) return;
-    const bytes = await file.arrayBuffer();
-    const blob = new Blob([bytes], { type: 'application/zip' });
-    downloadBlob(blob, file.name.replace(/\.pweb$/, '.zip'));
-    showToast('Saved as ' + file.name.replace(/\.pweb$/, '.zip'));
-  }
-
-  function promptForPackManifest() {
-    return new Promise((resolve) => {
-      const dlg = $('dialog-pack-manifest');
-      const form = $('form-pack-manifest');
-      form.reset();
-      let submitted = false;
-
-      function onSubmit(e) {
-        e.preventDefault();
-        submitted = true;
-        const data = Object.fromEntries(new FormData(form));
-        form.removeEventListener('submit', onSubmit);
-        dlg.close();
-        resolve(data);
-      }
-
-      function onClose() {
-        form.removeEventListener('submit', onSubmit);
-        if (!submitted) resolve(null);
-      }
-
-      form.addEventListener('submit', onSubmit);
-      dlg.addEventListener('close', onClose, { once: true });
-      dlg.showModal();
-    });
-  }
-
-  async function doPack() {
-    const inp = document.createElement('input');
-    inp.type = 'file';
-    inp.webkitdirectory = true;
-    inp.multiple = true;
-    const files = await new Promise(r => { inp.addEventListener('change', () => r(Array.from(inp.files))); inp.click(); });
-    if (!files.length) return;
-
-    const rootDir = files[0].webkitRelativePath.split('/')[0];
-    const normalized = files
-      .map(f => ({ file: f, path: f.webkitRelativePath.slice(rootDir.length + 1) }))
-      .filter(f => f.path);
-
-    let generatedManifest = null;
-
-    if (!normalized.some(f => f.path === 'manifest.json')) {
-      const data = await promptForPackManifest();
-      if (!data) return;
-
-      const title = data.title.trim();
-      const description = data.description ? data.description.trim() : '';
-      const author = data.author ? data.author.trim() : '';
-      const rawId = data.id ? data.id.trim() : '';
-      const bundleId = rawId || `org.portableweb.${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')}`;
-
-      const manifest = {
-        spec_version: '0.1',
-        id: bundleId,
-        version: '1.0.0',
-        title,
-        entry: 'index.html',
-        created: new Date().toISOString().split('T')[0],
-        ...(description && { description }),
-        ...(author && { author: { name: author } }),
-      };
-
-      generatedManifest = JSON.stringify(manifest, null, 2);
-    }
-
-    showLoading('Packing bundle…');
-    try {
-      const zip = new JSZip();
-      /* mimetype must be first, uncompressed — EPUB convention */
-      zip.file('mimetype', 'application/vnd.portableweb+zip', { compression: 'STORE' });
-
-      for (const { file, path } of normalized) {
-        if (path === 'mimetype') continue;
-        zip.file(path, await file.arrayBuffer());
-      }
-
-      if (generatedManifest) {
-        zip.file('manifest.json', generatedManifest);
-      }
-
-      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.portableweb+zip' });
-      const name = rootDir + '.pweb';
-      downloadBlob(blob, name);
-      showToast('Created ' + name);
-    } catch (e) {
-      showError(e.message);
-    } finally {
-      hideLoading();
-    }
-  }
-
-  async function doValidate() {
-    const file = await pickFile('.pweb,application/vnd.portableweb+zip');
-    if (!file) return;
-
-    showLoading('Validating…');
-    const checks = [];
-
-    try {
-      const ab = await file.arrayBuffer();
-      const u8 = new Uint8Array(ab);
-
-      /* 1 – ZIP signature */
-      const isZip = u8[0] === 0x50 && u8[1] === 0x4B && u8[2] === 0x03 && u8[3] === 0x04;
-      checks.push({ ok: isZip, label: 'Valid ZIP format' });
-      if (!isZip) { checks.push({ ok: false, label: 'Cannot continue — not a valid ZIP' }); throw 0; }
-
-      /* 2 – mimetype is first entry */
-      const view = new DataView(ab);
-      const fnLen = view.getUint16(26, true);
-      const firstName = new TextDecoder().decode(new Uint8Array(ab, 30, fnLen));
-      checks.push({ ok: firstName === 'mimetype', label: 'mimetype is the first entry' });
-
-      /* 3 – mimetype is STORE (uncompressed) */
-      checks.push({ ok: view.getUint16(8, true) === 0, label: 'mimetype uses STORE (uncompressed)' });
-
-      const zip = await JSZip.loadAsync(ab);
-
-      /* 4 – mimetype value */
-      const mimetypeEntry = zip.file('mimetype');
-      const mimeOk = mimetypeEntry && (await mimetypeEntry.async('text')).trim() === 'application/vnd.portableweb+zip';
-      checks.push({ ok: !!mimeOk, label: 'mimetype value is application/vnd.portableweb+zip' });
-
-      /* 5 – manifest.json present */
-      const manifestEntry = zip.file('manifest.json');
-      checks.push({ ok: !!manifestEntry, label: 'manifest.json exists' });
-      if (!manifestEntry) throw 0;
-
-      /* 6 – manifest.json parses */
-      let manifest;
-      try {
-        manifest = JSON.parse(await manifestEntry.async('text'));
-        checks.push({ ok: true, label: 'manifest.json is valid JSON' });
-      } catch {
-        checks.push({ ok: false, label: 'manifest.json is valid JSON' });
-        throw 0;
-      }
-
-      /* 7-11 – required fields */
-      for (const field of ['spec_version', 'id', 'version', 'title', 'entry']) {
-        checks.push({ ok: !!manifest[field], label: `manifest.${field} present` });
-      }
-
-      /* 12 – entry file exists */
-      if (manifest.entry) {
-        checks.push({ ok: !!zip.file(manifest.entry), label: `Entry file exists (${manifest.entry})` });
-      }
-    } catch (_) { /* partial results are fine */ }
-
-    hideLoading();
-
-    const passed = checks.filter(c => c.ok).length;
-    const total = checks.length;
-    const allPass = passed === total;
-
-    $('validate-title').textContent = `Validation — ${file.name}`;
-    $('validate-results').innerHTML = `
-      <div class="validate-score ${allPass ? 'pass' : 'fail'}">
-        ${passed} / ${total} checks passed ${allPass ? '&#10003;' : ''}
-      </div>
-      <div class="validate-list">
-        ${checks.map(c => `
-          <div class="validate-item ${c.ok ? 'ok' : 'fail'}">
-            <span class="validate-icon">${c.ok ? '&#10003;' : '&#10007;'}</span>
-            <span>${c.label}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-    $('dialog-validate').showModal();
-  }
-
-  function doNew() { $('dialog-new').showModal(); }
-
-  async function generateNewProject(data) {
-    const { title, description, author, id, format } = data;
-    const asPweb = format !== 'zip';
-    const bundleId = id.trim() || `org.portableweb.${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')}`;
-    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '') || 'bundle';
-
-    const manifest = {
-      spec_version: '0.1',
-      id: bundleId,
-      version: '1.0.0',
-      title: title.trim(),
-      description: description.trim() || undefined,
-      author: author.trim() ? { name: author.trim() } : undefined,
-      entry: 'index.html',
-      created: new Date().toISOString().split('T')[0],
-    };
-    Object.keys(manifest).forEach(k => manifest[k] === undefined && delete manifest[k]);
-
-    const css = `/* ${title} — PortableWeb v0.1 */
-:root {
-  --ink:        #0f0f1a;
-  --ink-soft:   #2d2d50;
-  --paper:      #f7f8ff;
-  --surface:    #edeeff;
-  --accent:     #7c3aed;
-  --blue:       #2563eb;
-  --teal:       #20d6d2;
-  --muted:      #6565a0;
-  --gradient:   linear-gradient(135deg, #7c3aed 0%, #2563eb 46%, #20d6d2 100%);
-  --serif:      ui-serif, "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", serif;
-  --sans:       ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --mono:       ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --radius:     10px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink:      #e8e8ff;
-    --ink-soft: #b0b0d8;
-    --paper:    #08080f;
-    --surface:  #0f0f1e;
-    --muted:    #7070a8;
-  }
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--serif);
-  font-size: 18px;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-}
-main {
-  max-width: 680px;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
-}
-header {
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(15,15,26,0.12);
-}
-@media (prefers-color-scheme: dark) {
-  header { border-bottom-color: rgba(232,232,255,0.1); }
-}
-.eyebrow {
-  font-family: var(--mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-.eyebrow::before {
-  content: "";
-  display: inline-block;
-  width: 20px;
-  height: 2px;
-  background: var(--gradient);
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-h1 {
-  font-size: clamp(2rem, 5vw, 2.75rem);
-  font-style: italic;
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin-bottom: 1rem;
-}
-h1 .highlight {
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.lead {
-  font-size: 1.1rem;
-  color: var(--ink-soft);
-  max-width: 32em;
-}
-.badge {
-  display: inline-block;
-  margin-top: 1.5rem;
-  padding: 0.4rem 1rem;
-  background: var(--gradient);
-  color: #fff;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.15s;
-}
-.badge:hover { opacity: 0.85; }
-section {
-  margin-top: 2.5rem;
-}
-h2 {
-  font-size: 1.3rem;
-  font-weight: 400;
-  font-style: italic;
-  margin-bottom: 0.75rem;
-  color: var(--ink);
-}
-p { margin-bottom: 0.85rem; color: var(--ink-soft); max-width: 36em; }
-a { color: var(--accent); }
-code {
-  font-family: var(--mono);
-  font-size: 0.82em;
-  background: var(--surface);
-  padding: 1px 5px;
-  border-radius: 3px;
-  color: var(--accent);
-}
-pre {
-  margin: 0.75rem 0 0.85rem;
-  padding: 14px 16px;
-  background: var(--surface);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  overflow-x: auto;
-}
-pre code {
-  background: none;
-  padding: 0;
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-}
-`;
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escHtml(title)}</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main>
-    <header>
-      <p class="eyebrow">PortableWeb &middot; v0.1</p>
-      <h1><span class="highlight">${escHtml(title)}</span></h1>
-      ${description ? `<p class="lead">${escHtml(description)}</p>` : '<p class="lead">An interactive document that lives in a file you own.</p>'}
-      <button class="badge" onclick="this.textContent = this.textContent === 'Hello!' ? '${escJs(title)}' : 'Hello!'">
-        Say hello &rarr;
-      </button>
-    </header>
-
-    <section>
-      <h2>Get started</h2>
-      <p>Edit <code>index.html</code> and <code>style.css</code> to build your interactive document.</p>
-      <p><strong>To pack into a .pweb:</strong> open the
-         <a href="https://portableweb.org/app/" target="_blank" rel="noopener">PortableWeb viewer</a>,
-         click <strong>Pack</strong>, and select this project folder.
-         (Tip: dragging a folder into the viewer doesn&rsquo;t work &mdash; use the Pack button.)</p>
-      <p><strong>Or use the CLI:</strong></p>
-      <pre><code>npm install -g portableweb
-pweb pack ./          # short alias
-portableweb pack ./   # full name</code></pre>
-    </section>
-  </main>
-  <script>
-    console.log('%c${escJs(title)}%c — PortableWeb v0.1',
-      'background:linear-gradient(90deg,#7c3aed,#2563eb,#20d6d2);color:#fff;padding:2px 8px;border-radius:3px',
-      'color:inherit'
-    );
-  <\/script>
-</body>
-</html>
-`;
-
-    const zip = new JSZip();
-
-    if (asPweb) {
-      /* spec-compliant: mimetype first, uncompressed */
-      zip.file('mimetype', 'application/vnd.portableweb+zip', { compression: 'STORE' });
-    }
-
-    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-    zip.file('index.html', html);
-    zip.file('style.css', css);
-
-    showLoading('Generating…');
-    try {
-      if (asPweb) {
-        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.portableweb+zip' });
-        downloadBlob(blob, slug + '.pweb');
-        showToast('Downloaded ' + slug + '.pweb');
-      } else {
-        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
-        downloadBlob(blob, slug + '.zip');
-        showToast('Downloaded ' + slug + '.zip — unzip to edit, then pack when ready');
-      }
-    } finally {
-      hideLoading();
-    }
-  }
-
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function escJs(s) {
-    return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  }
-
-  /* ── Bundle info panel ───────────────────────────────────────────────── */
-  function showBundleInfo() {
-    if (!currentBundle) return;
-    const m = currentBundle.manifest;
-
-    const perms = m.permissions;
-    const permHtml = Array.isArray(perms) && perms.length
-      ? `<div class="perm-list">${perms.map(p => `<span class="perm-badge">${escHtml(p)}</span>`).join('')}</div>`
-      : '<span style="color:var(--muted);font-size:13px">none declared</span>';
-
-    const rows = [
-      ['Title',    escHtml(m.title)],
-      ['ID',       `<code style="font-size:12px">${escHtml(m.id || '—')}</code>`],
-      ['Version',  escHtml(m.version || '—')],
-      ['Spec',     escHtml(m.spec_version || '—')],
-      ['Entry',    `<code style="font-size:12px">${escHtml(m.entry || '—')}</code>`],
-      ['Author',   escHtml((m.author?.name || m.author) || '—')],
-      ['Permissions', permHtml],
-    ].filter(([, v]) => v !== '—');
-
-    $('info-body').innerHTML = `<table class="info-table">${
-      rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')
-    }</table>`;
-    $('info-title').textContent = m.title;
-    $('dialog-info').showModal();
-  }
-
-
-  /* ── PWA: File Handling API (OS file-open) ───────────────────────────── */
-  function setupFileHandling() {
-    if (!('launchQueue' in window)) return;
-    window.launchQueue.setConsumer(async (params) => {
-      if (!params.files.length) return;
-      try {
-        openedViaFileHandler = true;
-        const file = await params.files[0].getFile();
-        await openBundle(file);
-      } catch (e) {
-        showError(String(e));
-      }
-    });
-  }
-
-  /* ── Drag-and-drop ────────────────────────────────────────────────────── */
-  function setupDragDrop() {
-    let enterCount = 0;
-    const overlay = $('drop-overlay');
-
-    const hasPweb = (dt) => {
-      if (!dt) return false;
-      for (const item of dt.items) {
-        if (item.kind === 'file') return true;
-      }
-      return false;
-    };
-
-    document.addEventListener('dragenter', (e) => {
-      if (!hasPweb(e.dataTransfer)) return;
-      enterCount++;
-      overlay.classList.add('active');
-    });
-
-    document.addEventListener('dragleave', (e) => {
-      enterCount = Math.max(0, enterCount - 1);
-      if (enterCount === 0) {
-        overlay.classList.remove('active');
-      }
-    });
-
-    document.addEventListener('dragover', (e) => e.preventDefault());
-
-    document.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      enterCount = 0;
-      overlay.classList.remove('active');
-      zone.classList.remove('dragover');
-
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-      if (file.name.endsWith('.pweb') || file.type.includes('portableweb')) {
-        await openBundle(file);
-      } else {
-        showError('Please drop a .pweb file');
-      }
-    });
-  }
-
-  /* ── PWA install prompt ───────────────────────────────────────────────── */
-  function setupInstallPrompt() {
-    let deferredPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      const btn = $('btn-install');
-      const hint = $('install-manual-hint');
-      if (btn) { btn.hidden = false; }
-      if (hint) { hint.hidden = true; }
-    });
-
-    window.addEventListener('appinstalled', () => {
-      deferredPrompt = null;
-    });
-
-    $('btn-install')?.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') deferredPrompt = null;
-    });
-  }
-
-  /* ── Mobile hint ──────────────────────────────────────────────────────── */
-  function setupMobileHint() {
-    const isTouch = navigator.maxTouchPoints > 0;
-    if (isTouch) {
-      const hint = $('open-drag-hint');
-      if (hint) hint.textContent = 'or tap to pick a file from your device';
-    }
-  }
-
-  /* ── Event wiring ─────────────────────────────────────────────────────── */
-  function setupEvents() {
-    $('btn-open').addEventListener('click', async () => {
-      const file = await pickFile('.pweb,application/vnd.portableweb+zip');
-      if (file) openBundle(file);
-    });
-
-    $('btn-unpack').addEventListener('click', doUnpack);
-    $('btn-pack').addEventListener('click', doPack);
-    $('btn-validate').addEventListener('click', doValidate);
-    $('btn-new').addEventListener('click', doNew);
-    $('btn-generate').addEventListener('click', doNew);
-
-    $('btn-back').addEventListener('click', closeViewer);
-
-    $('form-new').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target));
-      $('dialog-new').close();
-      await generateNewProject(data);
-    });
-
-    /* Close buttons on dialogs */
-    document.querySelectorAll('[data-close]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const dlg = $(btn.dataset.close);
-        if (dlg) dlg.close();
-      });
-    });
-
-    /* Close dialog on backdrop click */
-    document.querySelectorAll('dialog').forEach(dlg => {
-      dlg.addEventListener('click', (e) => {
-        if (e.target === dlg) dlg.close();
-      });
-    });
-  }
-
-  /* ── Service Worker registration ─────────────────────────────────────── */
-  function registerSW() {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/app/sw.js').catch(() => {});
-    }
-  }
-
-  /* ── Init ─────────────────────────────────────────────────────────────── */
-  function init() {
-    setupFileHandling();
-    setupDragDrop();
-    setupInstallPrompt();
-    setupMobileHint();
-    setupEvents();
-    registerSW();
-  }
-
-  return { init };
-})();
-
-document.addEventListener('DOMContentLoaded', App.init);
-</script>
+<script src="jszip.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

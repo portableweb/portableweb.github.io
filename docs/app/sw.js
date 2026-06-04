@@ -1,14 +1,20 @@
 /* PortableWeb PWA service worker */
-const CACHE = 'portableweb-v13';
+const CACHE = 'portableweb-v14';
 const DB_NAME = 'portableweb';
 const STORE = 'bundle-files';
 
 const SHELL = [
   '/app/',
   '/app/index.html',
+  '/app/app.js',
   '/app/manifest.json',
   '/app/jszip.min.js',
   '/icons/icon.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-192.png',
+  '/icons/icon-maskable-512.png',
+  '/icons/apple-touch-icon.png',
 ];
 
 /* ── IndexedDB helper ────────────────────────────────────────────────────── */
