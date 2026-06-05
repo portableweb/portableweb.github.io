@@ -1,5 +1,5 @@
 /* PortableWeb PWA service worker */
-const CACHE = 'portableweb-v16';
+const CACHE = 'portableweb-v17';
 const DB_NAME = 'portableweb';
 const STORE = 'bundle-files';
 
@@ -83,7 +83,21 @@ self.addEventListener('fetch', (e) => {
         }
         return new Response(record.data, {
           status: 200,
-          headers: { 'Content-Type': record.mime },
+          headers: {
+            'Content-Type': record.mime,
+            /* Block all external network access from inside the bundle.
+               'self' here resolves to the bundle's /app/bundle/<id>/ scope,
+               so intra-bundle fetches work; everything outside is denied. */
+            'Content-Security-Policy':
+              `default-src 'self' blob: data:; ` +
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval'; ` +
+              `style-src 'self' 'unsafe-inline'; ` +
+              `img-src 'self' blob: data:; ` +
+              `font-src 'self' data:; ` +
+              `media-src 'self' blob: data:; ` +
+              `connect-src /app/bundle/${sessionId}/; ` +
+              `form-action 'none';`,
+          },
         });
       } catch (err) {
         return new Response('Service worker error: ' + err.message, { status: 500 });
