@@ -57,11 +57,56 @@ Any `/app/*` path not matched by a static file falls back to the app shell (SPA 
 | **Validate** | Run 12 spec checks against a `.pweb` and show a pass/fail report |
 | **New Project** | Fill a short form → download a ready-to-edit starter `.pweb` |
 
-## Bundle rendering (v0.1 notes)
+## Bundle rendering
 
-Bundles are opened client-side with JSZip. Each file is converted to a Blob URL and the entry HTML has its `src`/`href`/`url()` attributes rewritten before loading into a sandboxed `<iframe>`.
+Bundles open in a dedicated popup window (not an iframe). The flow:
 
-The iframe runs with `sandbox="allow-scripts allow-forms allow-pointer-lock allow-popups allow-modals allow-downloads"` — JavaScript works, but the bundle cannot access the parent page's origin or storage. Bundle-level `localStorage`/`IndexedDB` is not available in this viewer tier; that requires the native Tauri viewer (`portableweb/viewer`) or a future Service Worker–based origin-isolation approach.
+1. User drops or picks a `.pweb` file — the app unpacks it with JSZip and stores every file in a per-session IndexedDB database named `portableweb-<sessionId>`.
+2. A popup window opens immediately (while the user gesture is still active) to `/app/bundle-portal.html?s=<sessionId>`. The portal polls its own session database until the files are ready, then navigates to the bundle's entry point.
+3. The service worker intercepts all requests under `/app/bundle/<sessionId>/` and serves them from the session database, so the bundle runs entirely offline with no network round-trips.
+4. When opened via OS double-click (File Handling API), the launcher window closes itself after the popup opens — the user sees only the bundle window.
+
+## Security model
+
+Bundles run at the same origin as the viewer (`portableweb.org`), so several explicit controls are applied to prevent a malicious bundle from escaping its session.
+
+### `noopener` popup
+The popup is opened with `noopener,noreferrer`. `window.opener` is permanently `null` inside the bundle window for its entire lifetime, even after the portal navigates to the bundle URL. The bundle cannot reach back to the viewer app's window, DOM, or call methods on it.
+
+### Per-session IndexedDB isolation
+Each bundle session is stored in its own database (`portableweb-<sessionId>`). A bundle's JavaScript knows its own session ID from its URL, so it can open its own database. It does not know other sessions' UUIDs and cannot target them by name.
+
+### API lockdown via SW injection
+The service worker injects a guard script into the `<head>` of every HTML response it serves for a bundle, before any of the bundle's own scripts run:
+
+```js
+// Injected by SW into bundle HTML — runs first, cannot be bypassed by bundle scripts
+Object.defineProperty(window, 'indexedDB', { get: () => undefined, configurable: false });
+Object.defineProperty(navigator, 'serviceWorker', { get: () => undefined, configurable: false });
+```
+
+- **`indexedDB` → `undefined`**: Bundles cannot enumerate or access any IndexedDB database, including their own session database or any other bundle's. Raw storage access is revoked entirely; the viewer storage API (planned) will be the sanctioned path.
+- **`navigator.serviceWorker` → `undefined`**: Bundles cannot register a service worker that could shadow or interfere with the viewer's own SW.
+
+### CSP `worker-src 'none'`
+Every bundle response is served with a `Content-Security-Policy` header that includes `worker-src 'none'`. This blocks `new Worker()` and `new SharedWorker()` at the browser level before they can be instantiated. Workers would otherwise get a fresh JS scope not covered by the HTML injection.
+
+### CSP `connect-src`
+Network requests from inside a bundle are restricted to the bundle's own session path (`/app/bundle/<sessionId>/`). The bundle cannot make fetch or XHR calls to external servers or to other parts of the viewer origin.
+
+### Summary
+
+| Threat | Control |
+|---|---|
+| Bundle accessing viewer window DOM/methods | `noopener` — `window.opener` is null |
+| Bundle reading/writing another session's files | Per-session IDB databases with UUID names |
+| Bundle accessing any IndexedDB directly | SW injects `window.indexedDB = undefined` |
+| Bundle registering a rogue service worker | SW injects `navigator.serviceWorker = undefined` |
+| Bundle spawning workers that bypass JS injection | CSP `worker-src 'none'` |
+| Bundle exfiltrating data to external servers | CSP `connect-src /app/bundle/<sessionId>/` |
+
+### Known remaining gap
+A bundle could call `indexedDB.databases()` (Chrome/Firefox) to enumerate all databases on the origin and discover other sessions' UUID-named databases — **but** the `window.indexedDB = undefined` injection now prevents this entirely on the main thread, and workers are blocked by CSP. The only residual gap is if a bundle somehow bypasses the injection (e.g. accesses `IDBFactory` via a prototype chain trick). True origin isolation (separate subdomain per bundle) would close this completely but is not feasible for an offline-first PWA without infrastructure changes.
 
 ## Related packages
 

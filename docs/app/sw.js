@@ -1,5 +1,5 @@
 /* PortableWeb PWA service worker */
-const CACHE = 'portableweb-v18';
+const CACHE = 'portableweb-v19';
 const STORE = 'bundle-files';
 
 const SHELL = [
@@ -17,6 +17,26 @@ const SHELL = [
   '/icons/icon-maskable-512.png',
   '/icons/apple-touch-icon.png',
 ];
+
+/* ── Bundle sandbox guard ────────────────────────────────────────────────── */
+
+/* Injected into the <head> of every HTML bundle response before any bundle
+   script runs. Revokes APIs that would let a bundle escape its session:
+   - indexedDB  : could read/write other sessions' databases
+   - serviceWorker : could register a SW that shadows the viewer's own SW
+   Workers are blocked at the CSP layer (worker-src 'none') so there is no
+   worker context left that could bypass these overrides. */
+const SANDBOX_GUARD =
+  '<script>(function(){'
+  + 'try{Object.defineProperty(window,"indexedDB",{get:function(){return undefined},configurable:false})}catch(e){}'
+  + 'try{Object.defineProperty(navigator,"serviceWorker",{get:function(){return undefined},configurable:false})}catch(e){}'
+  + '})()</script>';
+
+function injectGuard(html) {
+  const m = html.match(/<head(\s[^>]*)?>/i);
+  if (m) return html.slice(0, m.index + m[0].length) + SANDBOX_GUARD + html.slice(m.index + m[0].length);
+  return SANDBOX_GUARD + html;
+}
 
 /* ── IndexedDB helper ────────────────────────────────────────────────────── */
 
@@ -81,13 +101,15 @@ self.addEventListener('fetch', (e) => {
             headers: { 'Content-Type': 'text/plain' },
           });
         }
-        return new Response(record.data, {
+        const isHtml = record.mime === 'text/html';
+        const body = isHtml
+          ? new TextEncoder().encode(injectGuard(new TextDecoder().decode(record.data)))
+          : record.data;
+
+        return new Response(body, {
           status: 200,
           headers: {
             'Content-Type': record.mime,
-            /* Block all external network access from inside the bundle.
-               'self' here resolves to the bundle's /app/bundle/<id>/ scope,
-               so intra-bundle fetches work; everything outside is denied. */
             'Content-Security-Policy':
               `default-src 'self' blob: data:; ` +
               `script-src 'self' 'unsafe-inline' 'unsafe-eval'; ` +
@@ -96,6 +118,7 @@ self.addEventListener('fetch', (e) => {
               `font-src 'self' data:; ` +
               `media-src 'self' blob: data:; ` +
               `connect-src /app/bundle/${sessionId}/; ` +
+              `worker-src 'none'; ` +
               `form-action 'none';`,
           },
         });
