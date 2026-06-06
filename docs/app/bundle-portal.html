@@ -26,16 +26,48 @@
     if (!s) {
       document.getElementById('msg').textContent = 'Invalid session.';
     } else {
-      const bc = new BroadcastChannel('pweb-' + s);
-      bc.onmessage = (e) => {
-        bc.close();
-        if (e.data.error) {
+      const TIMEOUT_MS = 30000;
+      const start = Date.now();
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          /* Each session has its own isolated database — bundles cannot
+             enumerate or access other sessions' databases by name. */
+          const req = indexedDB.open('portableweb-' + s, 1);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function poll(db) {
+        if (Date.now() - start > TIMEOUT_MS) {
           document.getElementById('msg').innerHTML =
-            '<span class="err">Could not open bundle:<br>' + e.data.error + '</span>';
-        } else {
-          location.replace('/app/bundle/' + s + '/' + e.data.entry);
+            '<span class="err">Timed out waiting for bundle data.</span>';
+          return;
         }
-      };
+        const tx = db.transaction('bundle-files', 'readonly');
+        const req = tx.objectStore('bundle-files').get('manifest.json');
+        req.onsuccess = () => {
+          if (req.result) {
+            try {
+              const manifest = JSON.parse(new TextDecoder().decode(req.result.data));
+              if (!manifest.entry) throw new Error('manifest.json missing entry field');
+              location.replace('/app/bundle/' + s + '/' + manifest.entry);
+            } catch (e) {
+              document.getElementById('msg').innerHTML =
+                '<span class="err">Invalid bundle: ' + e.message + '</span>';
+            }
+          } else {
+            setTimeout(() => poll(db), 200);
+          }
+        };
+        req.onerror = () => setTimeout(() => poll(db), 200);
+      }
+
+      openDB().then(poll).catch(() => {
+        document.getElementById('msg').innerHTML =
+          '<span class="err">Could not open local storage.</span>';
+      });
     }
   </script>
 </body>

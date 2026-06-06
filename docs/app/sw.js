@@ -1,6 +1,5 @@
 /* PortableWeb PWA service worker */
 const CACHE = 'portableweb-v18';
-const DB_NAME = 'portableweb';
 const STORE = 'bundle-files';
 
 const SHELL = [
@@ -21,9 +20,9 @@ const SHELL = [
 
 /* ── IndexedDB helper ────────────────────────────────────────────────────── */
 
-function openDB() {
+function openDB(sessionId) {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(`portableweb-${sessionId}`, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -31,9 +30,9 @@ function openDB() {
 }
 
 async function getFile(sessionId, filePath) {
-  const db = await openDB();
+  const db = await openDB(sessionId);
   const record = await new Promise((resolve, reject) => {
-    const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(`${sessionId}/${filePath}`);
+    const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(filePath);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });

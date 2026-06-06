@@ -52,9 +52,9 @@ const App = (() => {
 
   /* ── IndexedDB helpers ────────────────────────────────────────────────── */
 
-  function openIDB() {
+  function openIDB(sessionId) {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('portableweb', 1);
+      const req = indexedDB.open(`portableweb-${sessionId}`, 1);
       req.onupgradeneeded = () => req.result.createObjectStore('bundle-files');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -62,11 +62,11 @@ const App = (() => {
   }
 
   async function storeBundle(sessionId, entries) {
-    const db = await openIDB();
+    const db = await openIDB(sessionId);
     const tx = db.transaction('bundle-files', 'readwrite');
     const store = tx.objectStore('bundle-files');
     for (const { path, data, mime } of entries) {
-      store.put({ data, mime }, `${sessionId}/${path}`);
+      store.put({ data, mime }, path);
     }
     await new Promise((resolve, reject) => {
       tx.oncomplete = resolve;
@@ -76,13 +76,7 @@ const App = (() => {
   }
 
   function clearBundle(sessionId) {
-    openIDB().then(db => {
-      const tx = db.transaction('bundle-files', 'readwrite');
-      tx.objectStore('bundle-files').delete(
-        IDBKeyRange.bound(`${sessionId}/`, `${sessionId}/￿`)
-      );
-      tx.oncomplete = () => db.close();
-    }).catch(() => {});
+    indexedDB.deleteDatabase(`portableweb-${sessionId}`);
   }
 
   function getMime(path) {
@@ -130,7 +124,7 @@ const App = (() => {
     /* Open popup immediately while the user gesture is still active.
        noopener ensures window.opener is null in the bundle window for the
        full lifetime of that window, even after the portal navigates to the
-       bundle URL. BroadcastChannel is used instead of the window reference. */
+       bundle URL. Portal polls IndexedDB directly to avoid broadcast race conditions. */
     const pw = Math.min(1400, screen.availWidth - 80);
     const ph = Math.min(900, screen.availHeight - 80);
     const pl = Math.round((screen.availWidth - pw) / 2);
@@ -140,8 +134,6 @@ const App = (() => {
       `pweb-${sessionId}`,
       `popup,noopener,noreferrer,width=${pw},height=${ph},left=${pl},top=${pt}`
     );
-
-    const bc = new BroadcastChannel(`pweb-${sessionId}`);
 
     /* Wait for the SW to control this page before proceeding */
     if (!navigator.serviceWorker.controller) {
@@ -184,12 +176,9 @@ const App = (() => {
 
       await storeBundle(sessionId, entries);
       lastSessionId = sessionId;
-      bc.postMessage({ entry: manifest.entry });
     } catch (e) {
-      bc.postMessage({ error: e.message });
       showError(e.message);
     } finally {
-      bc.close();
       hideLoading();
     }
   }
