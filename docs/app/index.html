@@ -426,51 +426,6 @@
     }
     .privacy-note svg { flex-shrink: 0; }
 
-    /* ════════════════════════════════════════════════════════════════════
-       VIEWER
-       ════════════════════════════════════════════════════════════════════ */
-    #view-viewer { background: #000; flex-direction: column; }
-    /* Bundle content takes over the full window — hide the rail while viewing */
-    #root:has(#view-viewer.active) .rail { display: none; }
-
-    .viewer-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 8px 0 14px;
-      height: 38px;
-      background: var(--rail-bg);
-      border-bottom: 1px solid var(--rail-line);
-      flex-shrink: 0;
-    }
-    .viewer-brand { display: flex; align-items: center; gap: 8px; color: var(--rail-text); }
-    .viewer-brand .glyph { color: var(--rail-text); }
-    .viewer-brand .vb-sep { width: 1px; height: 16px; background: var(--rail-line); margin: 0 2px; }
-    .viewer-title {
-      flex: 1;
-      font-size: 12.5px;
-      font-weight: 500;
-      color: var(--rail-text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .tb-btn {
-      display: flex; align-items: center; justify-content: center;
-      gap: 6px;
-      height: 26px; min-width: 26px;
-      padding: 0 8px;
-      border: none; background: none;
-      color: var(--rail-dim);
-      font-family: var(--sans);
-      font-size: 12px;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background 0.12s, color 0.12s;
-    }
-    .tb-btn:hover { background: rgba(255,255,255,0.09); color: var(--rail-text); }
-
-    .viewer-frame-wrap { flex: 1; position: relative; overflow: hidden; }
-    #viewer-frame { width: 100%; height: 100%; border: none; display: block; background: #fff; }
-
     /* ── Drop overlay ────────────────────────────────────────────────────── */
     #drop-overlay {
       display: none; position: fixed; inset: 0; z-index: 1000;
@@ -939,32 +894,6 @@
     </div>
   </div>
 
-  <!-- ════════════════ VIEWER ════════════════ -->
-  <div id="view-viewer" class="view">
-    <div class="viewer-toolbar" id="viewer-toolbar">
-      <span class="viewer-brand" aria-hidden="true">
-        <svg class="glyph" width="18" height="18" viewBox="0 0 36 36"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.32"/><rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.6"/><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"/></svg>
-        <span class="vb-sep"></span>
-      </span>
-      <span class="viewer-title" id="viewer-title"></span>
-      <button class="tb-btn" id="btn-info" title="Bundle info">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5.1" r="0.9" fill="currentColor"/></svg>
-        Info
-      </button>
-      <button class="tb-btn" id="btn-back" title="Close & return home" aria-label="Close bundle">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        Close
-      </button>
-    </div>
-    <div class="viewer-frame-wrap">
-      <iframe
-        id="viewer-frame"
-        title="Bundle content"
-        sandbox="allow-scripts allow-forms allow-pointer-lock allow-popups allow-modals allow-downloads"
-        allow="fullscreen"
-      ></iframe>
-    </div>
-  </div>
 
 </div><!-- #root -->
 
@@ -1078,20 +1007,6 @@
   </div>
   <div class="dialog-footer">
     <button class="btn-primary" data-close="dialog-validate">Done</button>
-  </div>
-</dialog>
-
-<!-- ── Bundle info dialog ────────────────────────────────────────────────── -->
-<dialog id="dialog-info" aria-labelledby="info-title">
-  <div class="dialog-header">
-    <span class="dialog-title" id="info-title">Bundle info</span>
-    <button class="dialog-close" data-close="dialog-info" aria-label="Close">&times;</button>
-  </div>
-  <div class="dialog-body">
-    <div id="info-body"></div>
-  </div>
-  <div class="dialog-footer">
-    <button class="btn-primary" data-close="dialog-info">Close</button>
   </div>
 </dialog>
 

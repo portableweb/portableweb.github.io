@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening bundle…</title>
+  <style>
+    html, body {
+      margin: 0; height: 100%;
+      background: #08080f;
+      color: #9090c0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #msg { text-align: center; line-height: 1.6; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div id="msg">Opening bundle…</div>
+  <script>
+    const s = new URLSearchParams(location.search).get('s');
+    if (!s) {
+      document.getElementById('msg').textContent = 'Invalid session.';
+    } else {
+      const bc = new BroadcastChannel('pweb-' + s);
+      bc.onmessage = (e) => {
+        bc.close();
+        if (e.data.error) {
+          document.getElementById('msg').innerHTML =
+            '<span class="err">Could not open bundle:<br>' + e.data.error + '</span>';
+        } else {
+          location.replace('/app/bundle/' + s + '/' + e.data.entry);
+        }
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 const App = (() => {
   /* State */
-  let currentBundle = null; // { manifest, sessionId }
-  let openedViaFileHandler = false;
+  let lastSessionId = null;
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -123,9 +122,28 @@ const App = (() => {
       return;
     }
 
-    // The SW must be controlling this page before we set the iframe src,
-    // otherwise it won't intercept /app/bundle/* requests.
-    // On first load the SW installs and claims via clients.claim() — wait for it.
+    /* Generate session ID synchronously so the portal URL is ready before any await */
+    const sessionId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    /* Open popup immediately while the user gesture is still active.
+       noopener ensures window.opener is null in the bundle window for the
+       full lifetime of that window, even after the portal navigates to the
+       bundle URL. BroadcastChannel is used instead of the window reference. */
+    const pw = Math.min(1400, screen.availWidth - 80);
+    const ph = Math.min(900, screen.availHeight - 80);
+    const pl = Math.round((screen.availWidth - pw) / 2);
+    const pt = Math.round((screen.availHeight - ph) / 2);
+    window.open(
+      `/app/bundle-portal.html?s=${sessionId}`,
+      `pweb-${sessionId}`,
+      `popup,noopener,noreferrer,width=${pw},height=${ph},left=${pl},top=${pt}`
+    );
+
+    const bc = new BroadcastChannel(`pweb-${sessionId}`);
+
+    /* Wait for the SW to control this page before proceeding */
     if (!navigator.serviceWorker.controller) {
       await Promise.race([
         new Promise(resolve =>
@@ -139,20 +157,19 @@ const App = (() => {
 
     showLoading('Opening bundle…');
     try {
+      if (lastSessionId) {
+        clearBundle(lastSessionId);
+        lastSessionId = null;
+      }
+
       const zip = await JSZip.loadAsync(await file.arrayBuffer());
 
-      /* Parse manifest */
       const mf = zip.file('manifest.json');
       if (!mf) throw new Error('Invalid bundle: missing manifest.json');
       const manifest = JSON.parse(await mf.async('text'));
       for (const k of ['spec_version', 'title', 'entry']) {
         if (!manifest[k]) throw new Error(`manifest.json is missing required field: "${k}"`);
       }
-
-      /* Extract every file and store in IndexedDB */
-      const sessionId = crypto.randomUUID
-        ? crypto.randomUUID()
-        : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
 
       const entries = [];
       await Promise.all(
@@ -166,46 +183,15 @@ const App = (() => {
       );
 
       await storeBundle(sessionId, entries);
-
-      /* Clear previous session */
-      if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
-
-      currentBundle = { manifest, sessionId, filename: file.name };
-      showViewer();
+      lastSessionId = sessionId;
+      bc.postMessage({ entry: manifest.entry });
     } catch (e) {
+      bc.postMessage({ error: e.message });
       showError(e.message);
     } finally {
+      bc.close();
       hideLoading();
     }
-  }
-
-  function showViewer() {
-    const { manifest, sessionId } = currentBundle;
-    const toolbar = $('viewer-toolbar');
-
-    if (openedViaFileHandler) {
-      /* Opened via OS double-click — no toolbar, window title = bundle title */
-      document.title = manifest.title;
-      if (toolbar) toolbar.style.display = 'none';
-    } else {
-      /* Opened from inside the app — show toolbar with bundle name, window = PortableWeb */
-      document.title = 'PortableWeb';
-      const titleEl = $('viewer-title');
-      if (titleEl) titleEl.textContent = manifest.title;
-      if (toolbar) toolbar.style.display = 'flex';
-    }
-
-    $('viewer-frame').src = `/app/bundle/${sessionId}/${manifest.entry}`;
-    setView('viewer');
-  }
-
-  function closeViewer() {
-    $('viewer-frame').src = 'about:blank';
-    if (currentBundle?.sessionId) clearBundle(currentBundle.sessionId);
-    currentBundle = null;
-    openedViaFileHandler = false;
-    document.title = 'PortableWeb';
-    setView('dashboard');
   }
 
   /* ── Developer tools ──────────────────────────────────────────────────── */
@@ -642,43 +628,16 @@ portableweb pack ./   # full name</code></pre>
     return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   }
 
-  /* ── Bundle info panel ───────────────────────────────────────────────── */
-  function showBundleInfo() {
-    if (!currentBundle) return;
-    const m = currentBundle.manifest;
-
-    const perms = m.permissions;
-    const permHtml = Array.isArray(perms) && perms.length
-      ? `<div class="perm-list">${perms.map(p => `<span class="perm-badge">${escHtml(p)}</span>`).join('')}</div>`
-      : '<span style="color:var(--muted);font-size:13px">none declared</span>';
-
-    const rows = [
-      ['Title',    escHtml(m.title)],
-      ['ID',       `<code style="font-size:12px">${escHtml(m.id || '—')}</code>`],
-      ['Version',  escHtml(m.version || '—')],
-      ['Spec',     escHtml(m.spec_version || '—')],
-      ['Entry',    `<code style="font-size:12px">${escHtml(m.entry || '—')}</code>`],
-      ['Author',   escHtml((m.author?.name || m.author) || '—')],
-      ['Permissions', permHtml],
-    ].filter(([, v]) => v !== '—');
-
-    $('info-body').innerHTML = `<table class="info-table">${
-      rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')
-    }</table>`;
-    $('info-title').textContent = m.title;
-    $('dialog-info').showModal();
-  }
-
-
   /* ── PWA: File Handling API (OS file-open) ───────────────────────────── */
   function setupFileHandling() {
     if (!('launchQueue' in window)) return;
     window.launchQueue.setConsumer(async (params) => {
       if (!params.files.length) return;
       try {
-        openedViaFileHandler = true;
         const file = await params.files[0].getFile();
         await openBundle(file);
+        /* Bundle opened in its own popup — close the launcher window */
+        window.close();
       } catch (e) {
         showError(String(e));
       }
@@ -774,9 +733,6 @@ portableweb pack ./   # full name</code></pre>
     $('btn-validate').addEventListener('click', doValidate);
     $('btn-new').addEventListener('click', doNew);
     $('btn-generate').addEventListener('click', doNew);
-
-    $('btn-back').addEventListener('click', closeViewer);
-    $('btn-info')?.addEventListener('click', showBundleInfo);
 
     $('form-new').addEventListener('submit', async (e) => {
       e.preventDefault();
