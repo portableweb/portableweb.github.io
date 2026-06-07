@@ -1,6 +1,5 @@
 const App = (() => {
-  /* State */
-  let lastSessionId = null;
+  const SANDBOX_ORIGIN = 'https://portableweb-sandbox.github.io';
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -50,35 +49,6 @@ const App = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  /* ── IndexedDB helpers ────────────────────────────────────────────────── */
-
-  function openIDB(sessionId) {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(`portableweb-${sessionId}`, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('bundle-files');
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function storeBundle(sessionId, entries) {
-    const db = await openIDB(sessionId);
-    const tx = db.transaction('bundle-files', 'readwrite');
-    const store = tx.objectStore('bundle-files');
-    for (const { path, data, mime } of entries) {
-      store.put({ data, mime }, path);
-    }
-    await new Promise((resolve, reject) => {
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
-  }
-
-  function clearBundle(sessionId) {
-    indexedDB.deleteDatabase(`portableweb-${sessionId}`);
-  }
-
   function getMime(path) {
     const ext = (path.split('.').pop() || '').toLowerCase();
     return {
@@ -111,49 +81,58 @@ const App = (() => {
   /* ── Bundle open ──────────────────────────────────────────────────────── */
 
   async function openBundle(file) {
-    if (!('serviceWorker' in navigator)) {
-      showError('Your browser must support Service Workers to open .pweb bundles.');
-      return;
-    }
-
-    /* Generate session ID synchronously so the portal URL is ready before any await */
+    /* Generate session ID synchronously — must happen before any await so
+       the popup URL is ready while the user gesture is still active. */
     const sessionId = crypto.randomUUID
       ? crypto.randomUUID()
       : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    /* Open popup immediately while the user gesture is still active.
-       noopener ensures window.opener is null in the bundle window for the
-       full lifetime of that window, even after the portal navigates to the
-       bundle URL. Portal polls IndexedDB directly to avoid broadcast race conditions. */
+    /* Open popup to sandbox origin (portableweb-sandbox.github.io).
+       Cross-origin boundary enforced by browser: bundle JS cannot reach
+       this window's DOM, storage, or cookies — no explicit noopener needed.
+       We keep the window reference so we can postMessage files to it. */
     const pw = Math.min(1400, screen.availWidth - 80);
     const ph = Math.min(900, screen.availHeight - 80);
     const pl = Math.round((screen.availWidth - pw) / 2);
     const pt = Math.round((screen.availHeight - ph) / 2);
-    window.open(
-      `/app/bundle-portal.html?s=${sessionId}`,
+    const win = window.open(
+      `${SANDBOX_ORIGIN}/portal.html?s=${sessionId}`,
       `pweb-${sessionId}`,
-      `popup,noopener,noreferrer,width=${pw},height=${ph},left=${pl},top=${pt}`
+      `popup,width=${pw},height=${ph},left=${pl},top=${pt}`
     );
 
-    /* Wait for the SW to control this page before proceeding */
-    if (!navigator.serviceWorker.controller) {
-      await Promise.race([
-        new Promise(resolve =>
-          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })
-        ),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Viewer timed out initialising. Please reload and try again.')), 8000)
-        ),
-      ]);
+    if (!win) {
+      showError('Popup was blocked. Please allow popups for this site and try again.');
+      return;
     }
+
+    /* Listen for portal-ready signal from sandbox — sent after sandbox SW
+       is active and the portal is ready to receive files. Race with a
+       timeout so we don't hang indefinitely if sandbox is unreachable. */
+    let portalReadyResolve, portalReadyReject;
+    const portalReady = new Promise((resolve, reject) => {
+      portalReadyResolve = resolve;
+      portalReadyReject = reject;
+    });
+
+    const portalTimeout = setTimeout(() => {
+      window.removeEventListener('message', msgHandler);
+      portalReadyReject(new Error('Sandbox timed out. Visit portableweb-sandbox.github.io once while online to install its service worker.'));
+    }, 15000);
+
+    const msgHandler = (e) => {
+      if (e.origin !== SANDBOX_ORIGIN) return;
+      if (e.data?.type === 'portal-ready' && e.data?.sessionId === sessionId) {
+        clearTimeout(portalTimeout);
+        window.removeEventListener('message', msgHandler);
+        portalReadyResolve();
+      }
+    };
+    window.addEventListener('message', msgHandler);
 
     showLoading('Opening bundle…');
     try {
-      if (lastSessionId) {
-        clearBundle(lastSessionId);
-        lastSessionId = null;
-      }
-
+      /* Unzip runs in parallel with waiting for portal-ready */
       const zip = await JSZip.loadAsync(await file.arrayBuffer());
 
       const mf = zip.file('manifest.json');
@@ -168,19 +147,45 @@ const App = (() => {
         Object.values(zip.files)
           .filter(entry => !entry.dir)
           .map(entry =>
-            entry.async('uint8array').then(data => {
-              entries.push({ path: entry.name, data, mime: getMime(entry.name) });
+            entry.async('arraybuffer').then(buffer => {
+              entries.push({ path: entry.name, data: buffer, mime: getMime(entry.name) });
             })
           )
       );
 
-      await storeBundle(sessionId, entries);
-      lastSessionId = sessionId;
+      /* Wait for portal, then transfer files (zero-copy via ArrayBuffer transfer) */
+      await portalReady;
+      const transferables = entries.map(e => e.data);
+      win.postMessage(
+        { type: 'bundle-files', sessionId, entries, entry: manifest.entry },
+        SANDBOX_ORIGIN,
+        transferables
+      );
     } catch (e) {
+      clearTimeout(portalTimeout);
+      window.removeEventListener('message', msgHandler);
+      if (!win.closed) win.postMessage({ type: 'error', message: e.message }, SANDBOX_ORIGIN);
       showError(e.message);
     } finally {
       hideLoading();
     }
+  }
+
+  /* Pre-installs the sandbox service worker via a hidden iframe so bundles
+     open instantly offline after the first online visit. Fire-and-forget. */
+  function ensureSandboxSW() {
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
+    const iframe = document.createElement('iframe');
+    iframe.src = `${SANDBOX_ORIGIN}/install.html`;
+    iframe.hidden = true;
+    const cleanup = () => { try { document.body.removeChild(iframe); } catch (_) {} };
+    const handler = (e) => {
+      if (e.origin !== SANDBOX_ORIGIN) return;
+      if (e.data === 'sw-ready') { window.removeEventListener('message', handler); cleanup(); }
+    };
+    window.addEventListener('message', handler);
+    setTimeout(() => { window.removeEventListener('message', handler); cleanup(); }, 15000);
+    document.body.appendChild(iframe);
   }
 
   /* ── Developer tools ──────────────────────────────────────────────────── */
@@ -761,6 +766,7 @@ portableweb pack ./   # full name</code></pre>
     setupMobileHint();
     setupEvents();
     registerSW();
+    ensureSandboxSW();
   }
 
   return { init };

@@ -1,17 +1,31 @@
-# @portableweb/web
+# portableweb-studio
 
-Node.js server powering **portableweb.org** — marketing homepage at `/` and browser-based PWA viewer at `/app/`.
+**Experimental** browser-based viewer for `.pweb` bundles with cross-origin bundle isolation.
+
+> **Official live site:** [portableweb.org](https://portableweb.org) / [portableweb.github.io](https://github.com/portableweb/portableweb.github.io)
+>
+> This org is for experimental security work. Changes here are tested before being considered for the main site. Do not rely on it for production use.
+
+## What this is
+
+This is the `portableweb/web` viewer adapted to run bundles on a separate origin:
+
+- **Viewer app** → `portableweb-studio.github.io/app/`
+- **Bundle execution** → `portableweb-sandbox.github.io` (separate origin, enforced by browser)
+
+The key difference from the main site: bundles no longer run on the same origin as the viewer. They run on `portableweb-sandbox.github.io`, which means the browser's same-origin policy provides a hard security boundary between bundle JS and the viewer's storage/DOM.
 
 ## What's inside
 
 ```
-public/
+docs/
   index.html        # portableweb.org marketing homepage
-  icons/icon.svg    # brand icon (used by both pages and the PWA manifest)
+  icons/icon.svg    # brand icon
   app/
-    index.html      # PWA app shell (dashboard + viewer, all JS/CSS inline)
-    manifest.json   # Web App Manifest — file_handlers for .pweb, offline icons
-    sw.js           # Service Worker — pre-caches app shell for offline use
+    index.html      # PWA app shell (dashboard, all JS/CSS inline)
+    manifest.json   # Web App Manifest — file_handlers for .pweb
+    sw.js           # Service Worker — caches app shell only (no bundle serving)
+    app.js          # App logic — opens bundles in sandbox popup
 server.js           # Express — static files + JSZip route + SPA fallback
 ```
 
@@ -22,140 +36,58 @@ npm install
 npm start          # → http://localhost:3000
 ```
 
-Set `PORT` env var to change the port.
+Note: bundle opening requires `portableweb-sandbox.github.io` to be reachable on first use (to install the sandbox service worker). After that, it works offline.
 
-## Routes
+## Bundle rendering — cross-origin popup flow
 
-| Path | What it serves |
+1. User drops or picks a `.pweb` file — the studio unzips it into memory with JSZip.
+2. A popup opens to `portableweb-sandbox.github.io/portal.html?s=<sessionId>`. The studio retains the window reference (no `noopener`).
+3. Studio waits for a `{ type: 'portal-ready' }` postMessage from the sandbox.
+4. In parallel, the sandbox portal registers its service worker (installs on first visit, instant thereafter).
+5. Once both ready: studio sends all bundle files via postMessage with ArrayBuffer transfer (zero-copy). Files are received by the sandbox portal and stored in a per-session IndexedDB database on `portableweb-sandbox.github.io`.
+6. Portal navigates to `/bundle/<sessionId>/<entry>`. The sandbox service worker intercepts the request and serves the entry HTML from IDB, injecting a security guard and setting CSP headers.
+7. When opened via OS double-click (File Handling API), the launcher window closes after the popup opens.
+
+## Security model
+
+### True origin isolation
+Bundles run on `portableweb-sandbox.github.io` — a different origin from the viewer. The browser's same-origin policy enforces:
+- Bundle JS cannot read or write the studio's localStorage, IndexedDB, or cookies
+- Bundle JS cannot access the studio's `window` object or DOM
+- `postMessage` is the only channel between the two origins, and the viewer only accepts messages from the sandbox origin
+
+### Additional controls applied inside the sandbox
+
+| Threat | Control |
 |---|---|
-| `/` | Marketing homepage |
-| `/app/` | PWA viewer app |
-| `/app/jszip.min.js` | JSZip 3.x (served from node_modules, cached by SW) |
-| `/icons/icon.svg` | Brand icon |
+| Bundle reading another session's IDB | Per-session databases with UUID names unknown to bundles |
+| Bundle accessing IDB directly | Sandbox SW injects `window.indexedDB = undefined` |
+| Bundle registering a rogue service worker | Sandbox SW injects `navigator.serviceWorker = undefined` |
+| Bundle spawning workers to bypass injection | CSP `worker-src 'none'` |
+| Bundle exfiltrating data externally | CSP `connect-src /bundle/<sessionId>/` |
 
-Any `/app/*` path not matched by a static file falls back to the app shell (SPA routing).
-
-## PWA features
-
-**File Handling API** — when the PWA is installed in Chrome or Edge on desktop, opening a `.pweb` file from the OS launches the app directly. The app receives the file via `window.launchQueue` and renders it immediately.
-
-**Drag-and-drop** — drop a `.pweb` file anywhere on the window to open it.
-
-**File picker** — the "Choose .pweb file" button opens a native file picker. On mobile, this opens the system file browser.
-
-**Offline** — the service worker pre-caches the app shell (HTML, manifest, SW, JSZip, icon) on install. The viewer works fully offline once cached.
-
-**Share Target** — the manifest declares a share target so `.pweb` files can be shared to the app from the OS share sheet (Android / desktop).
+### Offline support
+On first visit, the studio loads a hidden iframe from `portableweb-sandbox.github.io/install.html`, which registers the sandbox service worker in the background. After that one online visit, the sandbox works fully offline — bundle popups load from cache and serve files from IDB.
 
 ## Developer tools (dashboard)
 
 | Tool | What it does |
 |---|---|
-| **Open** | Pick and render a `.pweb` bundle in the viewer |
+| **Open** | Pick and open a `.pweb` bundle in a sandbox popup |
 | **Unpack** | Rename `.pweb` → `.zip` and download for inspection/editing |
-| **Pack** | Select a folder → build a spec-compliant `.pweb` (mimetype first, STORE compression) |
-| **Validate** | Run 12 spec checks against a `.pweb` and show a pass/fail report |
+| **Pack** | Select a folder → build a spec-compliant `.pweb` |
+| **Validate** | Run 12 spec checks against a `.pweb` |
 | **New Project** | Fill a short form → download a ready-to-edit starter `.pweb` |
 
-## Bundle rendering
-
-Bundles open in a dedicated popup window (not an iframe). The flow:
-
-1. User drops or picks a `.pweb` file — the app unpacks it with JSZip and stores every file in a per-session IndexedDB database named `portableweb-<sessionId>`.
-2. A popup window opens immediately (while the user gesture is still active) to `/app/bundle-portal.html?s=<sessionId>`. The portal polls its own session database until the files are ready, then navigates to the bundle's entry point.
-3. The service worker intercepts all requests under `/app/bundle/<sessionId>/` and serves them from the session database, so the bundle runs entirely offline with no network round-trips.
-4. When opened via OS double-click (File Handling API), the launcher window closes itself after the popup opens — the user sees only the bundle window.
-
-## Security model
-
-Bundles run at the same origin as the viewer (`portableweb.org`), so several explicit controls are applied to prevent a malicious bundle from escaping its session.
-
-### `noopener` popup
-The popup is opened with `noopener,noreferrer`. `window.opener` is permanently `null` inside the bundle window for its entire lifetime, even after the portal navigates to the bundle URL. The bundle cannot reach back to the viewer app's window, DOM, or call methods on it.
-
-### Per-session IndexedDB isolation
-Each bundle session is stored in its own database (`portableweb-<sessionId>`). A bundle's JavaScript knows its own session ID from its URL, so it can open its own database. It does not know other sessions' UUIDs and cannot target them by name.
-
-### API lockdown via SW injection
-The service worker injects a guard script into the `<head>` of every HTML response it serves for a bundle, before any of the bundle's own scripts run:
-
-```js
-// Injected by SW into bundle HTML — runs first, cannot be bypassed by bundle scripts
-Object.defineProperty(window, 'indexedDB', { get: () => undefined, configurable: false });
-Object.defineProperty(navigator, 'serviceWorker', { get: () => undefined, configurable: false });
-```
-
-- **`indexedDB` → `undefined`**: Bundles cannot enumerate or access any IndexedDB database, including their own session database or any other bundle's. Raw storage access is revoked entirely; the viewer storage API (planned) will be the sanctioned path.
-- **`navigator.serviceWorker` → `undefined`**: Bundles cannot register a service worker that could shadow or interfere with the viewer's own SW.
-
-### CSP `worker-src 'none'`
-Every bundle response is served with a `Content-Security-Policy` header that includes `worker-src 'none'`. This blocks `new Worker()` and `new SharedWorker()` at the browser level before they can be instantiated. Workers would otherwise get a fresh JS scope not covered by the HTML injection.
-
-### CSP `connect-src`
-Network requests from inside a bundle are restricted to the bundle's own session path (`/app/bundle/<sessionId>/`). The bundle cannot make fetch or XHR calls to external servers or to other parts of the viewer origin.
-
-### Summary
-
-| Threat | Control |
-|---|---|
-| Bundle accessing viewer window DOM/methods | `noopener` — `window.opener` is null |
-| Bundle reading/writing another session's files | Per-session IDB databases with UUID names |
-| Bundle accessing any IndexedDB directly | SW injects `window.indexedDB = undefined` |
-| Bundle registering a rogue service worker | SW injects `navigator.serviceWorker = undefined` |
-| Bundle spawning workers that bypass JS injection | CSP `worker-src 'none'` |
-| Bundle exfiltrating data to external servers | CSP `connect-src /app/bundle/<sessionId>/` |
-
-### Known remaining gap
-A bundle could call `indexedDB.databases()` (Chrome/Firefox) to enumerate all databases on the origin and discover other sessions' UUID-named databases — **but** the `window.indexedDB = undefined` injection now prevents this entirely on the main thread, and workers are blocked by CSP. The only residual gap is if a bundle somehow bypasses the injection (e.g. accesses `IDBFactory` via a prototype chain trick). True origin isolation (separate subdomain per bundle) would close this completely but is not feasible for an offline-first PWA without infrastructure changes.
-
-## Related packages
+## Related
 
 | Repo | Purpose |
 |---|---|
-| [`portableweb/spec`](https://github.com/portableweb/spec) | v0.1 spec, `hello.pweb` example, container and manifest docs |
-| [`portableweb/cli`](https://github.com/portableweb/cli) | `pweb` CLI — `pack`, `validate`, `init` |
-| [`portableweb/viewer`](https://github.com/portableweb/viewer) | Native desktop viewer (Tauri) with full sandbox and `pweb://` protocol |
-
-## Known issues / TODOs
-
-### Recent files re-open (not yet implemented)
-
-The "Recent" section in the dashboard stores filenames and titles in `localStorage`
-but cannot re-open files — the browser has no persistent access to the original file
-path after the session ends.
-
-**Fix:** Use the [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access)
-to store a `FileSystemFileHandle` per recent entry in IndexedDB.
-On click, call `handle.requestPermission({ mode: 'read' })` to re-acquire access,
-then `handle.getFile()` → `openBundle(file)`.
-
-Caveats:
-- Chrome/Edge desktop only (no Firefox, no mobile Safari)
-- Requires a user permission re-prompt each browser session
-- Handle goes stale if the file is moved or deleted
-
-### Domain categorisation — submit to enterprise web filters
-
-New domains default to "Uncategorized" in enterprise web filters, which most
-corporate firewalls block. Submit portableweb.org to each vendor's portal and
-request the category **Technology / Information Technology / Open Source Software**.
-
-| Vendor | Submission URL |
-|---|---|
-| Cisco Umbrella / Talos | https://investigate.umbrella.com |
-| Palo Alto Networks | https://urlfiltering.paloaltonetworks.com |
-| Zscaler | https://zscaler.com/tools/url-categorization |
-| Fortinet FortiGuard | https://fortiguard.com/webfilter |
-| Symantec / Broadcom | https://sitereview.symantec.com |
-| Barracuda | https://barracudacentral.org/lookups |
-| McAfee / Trellix | https://trustedsource.org |
-| Webroot BrightCloud | https://brightcloud.com/tools/url-ip-lookup |
-| IBM X-Force | https://exchange.xforce.ibmcloud.com |
-| Trend Micro | https://sitesafety.trendmicro.com |
-| Google Safe Browsing | https://transparencyreport.google.com/safe-browsing/search |
-
-Priority: **Cisco and Palo Alto** are the most common in enterprise environments.
-Most vendors review within 24–72 hours.
+| [portableweb-sandbox](https://github.com/portableweb-sandbox/portableweb-sandbox.github.io) | Isolated bundle execution origin (experimental) |
+| [portableweb/portableweb.github.io](https://github.com/portableweb/portableweb.github.io) | Official live site |
+| [portableweb/spec](https://github.com/portableweb/spec) | v0.1 spec, `hello.pweb` example |
+| [portableweb/cli](https://github.com/portableweb/cli) | `pweb` CLI — `pack`, `validate`, `init` |
+| [portableweb/viewer](https://github.com/portableweb/viewer) | Native desktop viewer (Tauri) |
 
 ## License
 
