@@ -1,5 +1,5 @@
 const App = (() => {
-  const SANDBOX_ORIGIN = 'https://portableweb-sandbox.github.io';
+  const SANDBOX_ORIGIN = 'https://sandbox.portableweb.org';
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -80,35 +80,19 @@ const App = (() => {
 
   /* ── Bundle open ──────────────────────────────────────────────────────── */
 
+  let currentBundle = null;
+
   async function openBundle(file) {
-    /* Generate session ID synchronously — must happen before any await so
-       the popup URL is ready while the user gesture is still active. */
     const sessionId = crypto.randomUUID
       ? crypto.randomUUID()
       : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    /* Open popup to sandbox origin (portableweb-sandbox.github.io).
-       Cross-origin boundary enforced by browser: bundle JS cannot reach
-       this window's DOM, storage, or cookies — no explicit noopener needed.
-       We keep the window reference so we can postMessage files to it. */
-    const pw = Math.min(1400, screen.availWidth - 80);
-    const ph = Math.min(900, screen.availHeight - 80);
-    const pl = Math.round((screen.availWidth - pw) / 2);
-    const pt = Math.round((screen.availHeight - ph) / 2);
-    const win = window.open(
-      `${SANDBOX_ORIGIN}/portal.html?s=${sessionId}`,
-      `pweb-${sessionId}`,
-      `popup,width=${pw},height=${ph},left=${pl},top=${pt}`
-    );
+    /* Point the sandbox iframe at the portal — no popup, no user-gesture
+       requirement. Cross-origin isolation comes from the subdomain boundary. */
+    const frame = $('viewer-frame');
+    frame.src = `${SANDBOX_ORIGIN}/portal.html?s=${sessionId}`;
 
-    if (!win) {
-      showError('Popup was blocked. Please allow popups for this site and try again.');
-      return;
-    }
-
-    /* Listen for portal-ready signal from sandbox — sent after sandbox SW
-       is active and the portal is ready to receive files. Race with a
-       timeout so we don't hang indefinitely if sandbox is unreachable. */
+    /* Listen for portal-ready signal from the iframe */
     let portalReadyResolve, portalReadyReject;
     const portalReady = new Promise((resolve, reject) => {
       portalReadyResolve = resolve;
@@ -117,7 +101,7 @@ const App = (() => {
 
     const portalTimeout = setTimeout(() => {
       window.removeEventListener('message', msgHandler);
-      portalReadyReject(new Error('Sandbox timed out. Visit portableweb-sandbox.github.io once while online to install its service worker.'));
+      portalReadyReject(new Error('Sandbox timed out. Make sure sandbox.portableweb.org is reachable and try again.'));
     }, 15000);
 
     const msgHandler = (e) => {
@@ -153,22 +137,45 @@ const App = (() => {
           )
       );
 
-      /* Wait for portal, then transfer files (zero-copy via ArrayBuffer transfer) */
+      /* Wait for portal, then transfer files zero-copy via ArrayBuffer transfer */
       await portalReady;
       const transferables = entries.map(e => e.data);
-      win.postMessage(
+      frame.contentWindow.postMessage(
         { type: 'bundle-files', sessionId, entries, entry: manifest.entry },
         SANDBOX_ORIGIN,
         transferables
       );
+
+      currentBundle = { manifest, sessionId, filename: file.name };
+      showViewer();
     } catch (e) {
       clearTimeout(portalTimeout);
       window.removeEventListener('message', msgHandler);
-      if (!win.closed) win.postMessage({ type: 'error', message: e.message }, SANDBOX_ORIGIN);
+      frame.src = 'about:blank';
       showError(e.message);
     } finally {
       hideLoading();
     }
+  }
+
+  function showViewer() {
+    const { manifest } = currentBundle;
+    document.title = manifest.title;
+    if (openedViaFileHandler) {
+      $('viewer-toolbar').style.display = 'none';
+    } else {
+      $('viewer-title').textContent = manifest.title;
+      $('viewer-toolbar').style.display = 'flex';
+    }
+    openedViaFileHandler = false;
+    setView('viewer');
+  }
+
+  function closeViewer() {
+    $('viewer-frame').src = 'about:blank';
+    currentBundle = null;
+    document.title = 'PortableWeb';
+    setView('dashboard');
   }
 
   /* Pre-installs the sandbox service worker via a hidden iframe so bundles
@@ -721,6 +728,8 @@ portableweb pack ./   # full name</code></pre>
       const file = await pickFile('.pweb,application/vnd.portableweb+zip');
       if (file) openBundle(file);
     });
+
+    $('btn-back')?.addEventListener('click', closeViewer);
 
     $('btn-unpack').addEventListener('click', doUnpack);
     $('btn-pack').addEventListener('click', doPack);

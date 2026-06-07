@@ -98,6 +98,27 @@
     .view { display: none; height: 100%; width: 100%; }
     .view.active { display: flex; }
 
+    /* ── Viewer ──────────────────────────────────────────────────────────── */
+    #view-viewer { flex-direction: column; }
+    .viewer-toolbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 12px; height: 44px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--paper);
+    }
+    .viewer-title {
+      flex: 1; font-size: 13px; font-weight: 500; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tb-btn {
+      width: 30px; height: 30px; border: none; background: none;
+      color: var(--muted); cursor: pointer; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s; flex-shrink: 0;
+    }
+    .tb-btn:hover { background: var(--surface); color: var(--ink); }
+    #viewer-frame { flex: 1; width: 100%; border: 0; display: block; }
+
     /* glyph helper */
     .glyph { display: block; flex-shrink: 0; color: currentColor; }
 
@@ -894,6 +915,22 @@
     </div>
   </div>
 
+  <!-- ════════════════ VIEWER ════════════════ -->
+  <div id="view-viewer" class="view">
+    <div class="viewer-toolbar" id="viewer-toolbar">
+      <button class="tb-btn" id="btn-back" title="Close bundle" aria-label="Close bundle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="viewer-title" id="viewer-title"></span>
+    </div>
+    <iframe id="viewer-frame"
+      sandbox="allow-scripts allow-same-origin"
+      title="Bundle viewer"
+      src="about:blank">
+    </iframe>
+  </div>
 
 </div><!-- #root -->
 
