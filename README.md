@@ -1,4 +1,4 @@
-# portableweb-studio
+# portableweb-viewer
 
 **Experimental** browser-based viewer for `.pweb` bundles with cross-origin bundle isolation.
 
@@ -10,7 +10,7 @@
 
 This is the `portableweb/web` viewer adapted to run bundles on a separate origin:
 
-- **Viewer app** → `portableweb-studio.github.io/app/`
+- **Viewer app** → `portableweb-viewer.github.io/app/`
 - **Bundle execution** → `portableweb-sandbox.github.io` (separate origin, enforced by browser)
 
 The key difference from the main site: bundles no longer run on the same origin as the viewer. They run on `portableweb-sandbox.github.io`, which means the browser's same-origin policy provides a hard security boundary between bundle JS and the viewer's storage/DOM.
