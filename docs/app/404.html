@@ -780,6 +780,24 @@
   </style>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1ab4277d7670401b84b3ea2daad6a745"}'></script><!-- End Cloudflare Web Analytics -->
   <script>
+    /* On portableweb.org, probe the manifest. Corporate firewalls that haven't
+       categorised the domain yet return 403 on sub-resources, making the PWA
+       non-installable. Redirect to the GitHub Pages mirror which is always
+       allowed in those environments. */
+    (function () {
+      if (location.hostname !== 'portableweb.org') return;
+      try {
+        var ctrl = new AbortController();
+        setTimeout(function () { ctrl.abort(); }, 5000);
+        fetch('/app/manifest.json', { method: 'HEAD', cache: 'no-store', signal: ctrl.signal })
+          .then(function (r) {
+            if (r.status === 403) location.replace('https://pwebviewer.github.io/app');
+          })
+          .catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
+  <script>
     /* Detect mobile/tablet by user agent (not viewport width) and flag <html>
        early so the gate paints before the app does — no flash of the desktop UI. */
     (function () {
