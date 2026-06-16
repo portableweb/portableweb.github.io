@@ -101,7 +101,7 @@ nav.site a.nav-app:hover svg { transform: translateX(2px); }
 /* hero */
 .hero { padding: clamp(2.5rem, 7vh, 4.5rem) 0 clamp(2.5rem, 6vh, 4rem); }
 .status {
-  display: inline-flex; align-items: center; white-space: nowrap; gap: 0.5rem;
+  display: inline-flex; align-items: center; max-width: 100%; gap: 0.5rem;
   padding: 0.35rem 0.8rem; border: 1px solid var(--rule);
   font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--ink); margin-bottom: 1.75rem;
@@ -294,6 +294,7 @@ footer { padding: 4rem 0 3rem; border-top: 1px solid var(--rule); margin-top: 4r
 }
 @media (max-width: 540px) {
   nav.site { gap: 0.9rem; }
+  .status { align-items: flex-start; letter-spacing: 0.1em; line-height: 1.45; }
   .anatomy-row { grid-template-columns: 1fr; gap: 0.25rem; }
   .roadmap-item { grid-template-columns: 1fr; gap: 0.4rem; }
 }
