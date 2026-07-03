@@ -279,6 +279,36 @@ footer { padding: 4rem 0 3rem; border-top: 1px solid var(--rule); margin-top: 4r
 .footer-meta a { color: var(--muted); border-bottom: 1px solid transparent; }
 .footer-meta a:hover { color: var(--ink); border-bottom-color: currentColor; }
 
+/* project status board */
+.stateboard { margin-top: 2rem; border-top: 1px solid var(--rule); }
+.state-row { display: grid; grid-template-columns: 13rem 1fr; gap: 1.5rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.state-body h3 { font-size: 1.02rem; margin-bottom: 0.2rem; }
+.state-body p { margin: 0; font-size: 0.92rem; color: var(--ink-soft); }
+.st { justify-self: start; font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.24rem 0.6rem; border-radius: 5px; border: 1px solid var(--rule); white-space: nowrap; display: inline-flex; align-items: center; gap: 0.45rem; }
+.st::before { content: ""; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.st.done { color: var(--ink); }
+.st.done::before { background: #20d6d2; }
+.st.wip { color: var(--accent); }
+.st.wip::before { background: var(--accent); animation: pulse 2.4s infinite; }
+@media (max-width: 600px) { .state-row { grid-template-columns: 1fr; gap: 0.45rem; } }
+
+/* who chips + roadmap beyond chips */
+.who-chips, .beyond-chips { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.who-chips { margin-top: 1.5rem; }
+.beyond-chips { margin-top: 0.75rem; }
+.who-chips span, .beyond-chips span { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; color: var(--ink); border: 1px solid var(--rule); border-radius: 999px; padding: 0.42rem 0.9rem; background: var(--paper-shadow); }
+.beyond-chips span { font-size: 0.7rem; padding: 0.3rem 0.7rem; color: var(--ink-soft); }
+
+/* FAQ */
+.faq-list { margin-top: 2rem; border-top: 1px solid var(--rule); max-width: 44em; }
+.faq-list details { border-bottom: 1px solid var(--rule); }
+.faq-list summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 1.05rem 0; font-weight: 600; font-size: 1.02rem; color: var(--ink); }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after { content: "+"; font-family: var(--mono); color: var(--muted); font-weight: 400; font-size: 1.1rem; line-height: 1; transition: transform 0.18s ease; flex-shrink: 0; }
+.faq-list details[open] summary::after { transform: rotate(45deg); color: var(--accent); }
+.faq-list details p { margin: 0 0 1.15rem; font-size: 0.95rem; color: var(--ink-soft); }
+.faq-list details p a { border-bottom: 1px solid currentColor; }
+
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

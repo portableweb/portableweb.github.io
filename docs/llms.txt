@@ -1,6 +1,6 @@
 # PortableWeb
 
-> PortableWeb is an open file format for interactive web content. It is not an AI tool or AI platform and does not generate content — it is the format that content (built by hand or with any AI tool) is saved and shared as. A PortableWeb bundle (`.pweb`) packages HTML, CSS, JavaScript, and media into a single self-contained, sandboxed file that a compatible viewer opens on any platform — entirely offline, with no server, no web origin, no app store, and no browser required. Media type: `application/vnd.portableweb+zip`.
+> PortableWeb is an open file format for interactive documents — interactive content built with web technology, made as portable and durable as PDF. It is not an AI tool or AI platform and does not generate content — it is the format that content (built by hand or with any AI tool) is saved and shared as. A PortableWeb bundle (`.pweb`) packages HTML, CSS, JavaScript, and media into a single self-contained, sandboxed file that a compatible viewer opens on any platform — entirely offline, with no server, no web origin, no app store, and no browser required. Media type: `application/vnd.portableweb+zip`.
 
 ## The problem it solves
 
@@ -25,11 +25,27 @@ AI-assisted tools now generate interactive web content — games, simulations, p
 
 A `.pweb` is a ZIP archive containing: `mimetype` (required, first, uncompressed), `manifest.json` (required: id, version, title, entry, permissions), `index.html` (required entry), and optional `assets/`, `media/`, `scripts/`, `styles/`.
 
+## Who it's for
+
+Developers, AI tools and their users, teachers and students, researchers, scientific publishers, museums and libraries, government archives, and businesses — anyone whose interactive work should outlive its hosting.
+
 ## Standards & status
 
 - W3C Portable Web Content Format (PortableWeb) Community Group: https://www.w3.org/community/portableweb/
 - IETF Internet-Draft (draft-selvaraj-portableweb-format): https://datatracker.ietf.org/doc/draft-selvaraj-portableweb-format/
-- Status: v0.1 draft. Container and manifest defined; sandbox, storage, signing, and an offline peer-to-peer channel (Bluetooth / Wi-Fi Direct) are forthcoming.
+- Status: v0.1 draft. Container and manifest defined in the published Internet-Draft; sandbox, storage, signing, and an offline peer-to-peer channel (Bluetooth / Wi-Fi Direct) are forthcoming. Longer-term exploratory directions: digital signatures, optional encryption, local device channels, package-to-package communication, package repositories, native OS integration.
+- Tooling today: a browser-based web app (installable PWA) is available now to open, pack, validate, and scaffold `.pweb` bundles. Native viewers for desktop and mobile are in development.
+
+## FAQ (short answers)
+
+- Not another browser: viewers use the platform's existing web engine.
+- Not just a ZIP: the ZIP container carries a `mimetype` marker, manifest, defined entry point, and sandbox rules viewers must enforce (like EPUB/DOCX).
+- No internet required: fully offline; network access is off by default and permission-gated.
+- No file access: no filesystem access, per-bundle storage, deny-by-default permissions.
+- Built with normal web tools: any HTML/CSS/JS plus a `manifest.json`, zipped per spec.
+- JavaScript is fully allowed, inside the sandbox.
+- Open source: spec CC-BY 4.0, tooling MIT.
+- AI can generate `.pweb` files: the format is vendor-neutral.
 
 ## Links
 

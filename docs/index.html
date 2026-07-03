@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PortableWeb — A portable file format for interactive web content</title>
+  <title>PortableWeb — The file format for a portable web bundle, built to run everywhere</title>
   <meta name="description" content="PortableWeb is an open file format for interactive web content. One .pweb file — built by hand or with any AI tool — that runs on any device, fully offline, with no server, no origin, and no app store.">
   <link rel="canonical" href="https://portableweb.org/">
   <meta name="author" content="PortableWeb">
@@ -184,6 +184,7 @@
       <a href="#anatomy">Anatomy</a>
       <a href="#viewer">Viewer</a>
       <a href="#standards">Standards</a>
+      <a href="#faq">FAQ</a>
       <a href="https://github.com/portableweb">GitHub</a>
       <a class="nav-app" href="/app/">Open app <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 10l6-6M5 4h5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
     </nav>
@@ -194,12 +195,10 @@
     <div class="status">W3C Community Group &middot; IETF Internet-Draft</div>
     <h1 class="hero-title">The file format for a portable web bundle, <span class="accent">built to run everywhere.</span></h1>
     <p class="hero-lede">
-      Games, simulations, presentations, and 3D experiences &mdash; built by hand or with any AI
-      tool &mdash; are trapped behind a fragile, expiring URL. PortableWeb sets them loose:
-      <strong>anything built with web technology becomes one portable, shareable <code>.pweb</code>
-      file</strong> you can save, send, and archive like a document &mdash; running on any device,
-      fully offline, with no server, no web origin, and no app store. And as AI models mature,
-      they&rsquo;ll generate <code>.pweb</code> directly &mdash; portable and shareable the moment it exists.
+      <strong>PortableWeb is an open file format for interactive documents.</strong> It packages
+      the HTML, CSS, JavaScript, and media of an experience into a single <code>.pweb</code> file
+      that runs on any device, fully offline &mdash; sandboxed, with no server, no web origin, and
+      no app store &mdash; and still opens years from now. Built by hand, or with any AI tool.
     </p>
     <div class="cta-row">
       <a class="btn primary" href="/app/">Open the web app &rarr;</a>
@@ -380,32 +379,36 @@
       skilled work is now generated in minutes &mdash; by the million. None of it has a
       natural place to live.
     </p>
-    <p>Every existing option forces an unacceptable tradeoff:</p>
+    <p>The first question every engineer asks: <em>why not just use what exists?</em></p>
 
     <div class="fail-list">
       <div class="fail">
-        <div class="fail-name">Deploy to a server <span class="x">needs hosting</span></div>
+        <div class="fail-name">Why not just host it? <span class="x">needs a server</span></div>
         <p>Requires infrastructure and a live connection. Wrong tool for ephemeral, single-use, or personal content &mdash; and it vanishes the day the host goes dark.</p>
       </div>
       <div class="fail">
-        <div class="fail-name">Publish to an app store <span class="x">needs an account</span></div>
+        <div class="fail-name">Why not an app store? <span class="x">needs an account</span></div>
         <p>Developer accounts, review cycles, ongoing maintenance. Fine for long-lived commercial software; absurd for the volume of artifacts being made today.</p>
       </div>
       <div class="fail">
-        <div class="fail-name">PDF <span class="x">no interactivity</span></div>
+        <div class="fail-name">Why not PDF? <span class="x">no interactivity</span></div>
         <p>Portable and archival, but it flattens everything. A game loop, a live simulation, or a 3D model simply cannot survive the trip.</p>
       </div>
       <div class="fail">
-        <div class="fail-name">EPUB <span class="x">book model only</span></div>
+        <div class="fail-name">Why not a ZIP? <span class="x">no runtime rules</span></div>
+        <p>A ZIP is just files. Nothing says how it&rsquo;s identified, what runs first, what&rsquo;s sandboxed, or what a viewer must enforce. PortableWeb is exactly that discipline &mdash; built on top of ZIP.</p>
+      </div>
+      <div class="fail">
+        <div class="fail-name">Why not EPUB? <span class="x">book model only</span></div>
         <p>Its scripting is an enhancement to a reading experience, not a general runtime. It can't meaningfully represent a game or a real-time simulation.</p>
       </div>
       <div class="fail">
-        <div class="fail-name">Web Bundles <span class="x">never shipped</span></div>
+        <div class="fail-name">Why not Web Bundles? <span class="x">never shipped</span></div>
         <p>Designed as a network transport optimization, not a portable execution environment. No offline-first model; never achieved broad implementation.</p>
       </div>
       <div class="fail">
-        <div class="fail-name">Web App Manifest <span class="x">needs a live origin</span></div>
-        <p>Describes how an already-deployed app presents itself. It is tied to a web origin &mdash; it says nothing about content that has no server at all.</p>
+        <div class="fail-name">Why not a PWA? <span class="x">needs a live origin</span></div>
+        <p>Fully interactive, but tied to a live server and a web origin. Installing one doesn&rsquo;t make it yours &mdash; the model says nothing about content that has no server at all.</p>
       </div>
     </div>
 
@@ -424,14 +427,12 @@
     </p>
     <p>
       It behaves like a document. You can save it, copy it, email it, archive it, or AirDrop it
-      across the room. It works the first time and the thousandth. It doesn&rsquo;t expire when a
-      CDN goes dark. The format is <strong>content-model agnostic</strong>: a bundle can hold a
-      game, a presentation, a simulation, a 3D experience, a scientific model, a report, or a book.
+      across the room. It works the first time and the thousandth, and it doesn&rsquo;t expire
+      when a CDN goes dark.
     </p>
     <p>
-      And the loop closes on itself. Today you ask a model to build something, then pack the
-      result as a <code>.pweb</code>. As models mature, they&rsquo;ll emit the
-      <code>.pweb</code> directly &mdash; the finished, portable file, instantly usable everywhere.
+      The format is <strong>content-model agnostic</strong>: a bundle can hold a game, a
+      presentation, a simulation, a 3D experience, a scientific model, a report, or a book.
     </p>
   </section>
 
@@ -529,6 +530,45 @@
       <div class="use-case"><div class="num">04</div><h3>3D &amp; data experiences</h3><p>Models, visualizations, and reproducible figures that stay explorable &mdash; not screenshots of something that used to run.</p></div>
       <div class="use-case"><div class="num">05</div><h3>Personal tools</h3><p>Journals, calculators, planners, trackers. Tools you keep as files instead of renting as subscriptions.</p></div>
       <div class="use-case"><div class="num">06</div><h3>Archival of interactive work</h3><p>For libraries, museums, journals, and individuals who need interactive content to outlive any host.</p></div>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section class="block" id="ai">
+    <p class="eyebrow">The AI wave</p>
+    <h2>AI can build it. Nothing lets you keep it.</h2>
+    <p class="lead-p">
+      AI tools now generate interactive applications, lessons, simulations, dashboards, and
+      reports in minutes &mdash; and most of that work disappears behind a temporary deployment
+      or an expiring share link.
+    </p>
+    <p>
+      PortableWeb gives AI-generated interactive work a durable, shareable home. The artifact
+      stops being a URL someone else hosts and becomes a file you own.
+    </p>
+    <p>
+      The format is vendor-neutral: any model or tool that emits HTML, CSS, and JavaScript can
+      emit a <code>.pweb</code>. As models mature, they&rsquo;ll produce the finished, portable
+      file directly &mdash; usable everywhere the moment it exists.
+    </p>
+  </section>
+
+  <!-- Who it's for -->
+  <section class="block" id="who">
+    <p class="eyebrow">Who it&rsquo;s for</p>
+    <h2>Anyone whose interactive work should outlive its hosting.</h2>
+    <p>A file format doesn&rsquo;t pick its users &mdash; but a few groups feel the gap today:</p>
+    <div class="who-chips">
+      <span>Developers</span>
+      <span>Game creators</span>
+      <span>AI tools &amp; their users</span>
+      <span>Teachers &amp; students</span>
+      <span>Researchers</span>
+      <span>Scientific publishers</span>
+      <span>Museums &amp; libraries</span>
+      <span>Government archives</span>
+      <span>Businesses</span>
+      <span>&hellip;and anyone with a file worth keeping</span>
     </div>
   </section>
 
@@ -642,17 +682,99 @@
         <div class="roadmap-version future">v1.0</div>
         <div class="roadmap-body"><h3>Stable spec</h3><p>From v1.0 forward, bundles render correctly in any v1.0-compatible viewer, forever. New features ship in v1.x and v2.x without breaking old bundles.</p></div>
       </div>
+      <div class="roadmap-item">
+        <div class="roadmap-version future">Beyond</div>
+        <div class="roadmap-body">
+          <h3>Future capabilities <em>(exploratory &mdash; no dates)</em></h3>
+          <p>Directions under discussion for the ecosystem:</p>
+          <div class="beyond-chips">
+            <span>Digital signatures</span>
+            <span>Optional encryption</span>
+            <span>Local device channels</span>
+            <span>Package-to-package communication</span>
+            <span>Package repositories</span>
+            <span>Native OS integration</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project status -->
+  <section class="block" id="state">
+    <p class="eyebrow">Where the project stands</p>
+    <h2>An open standards effort, in progress.</h2>
+    <div class="stateboard">
+      <div class="state-row">
+        <span class="st done">Published</span>
+        <div class="state-body"><h3>IETF Internet-Draft</h3><p><code>draft-selvaraj-portableweb-format</code> &mdash; the container, manifest, and media type.</p></div>
+      </div>
+      <div class="state-row">
+        <span class="st done">Active</span>
+        <div class="state-body"><h3>W3C Community Group</h3><p>Portable Web Content Format CG &mdash; open to anyone; no W3C membership required.</p></div>
+      </div>
+      <div class="state-row">
+        <span class="st done">Open</span>
+        <div class="state-body"><h3>Specification &amp; tooling</h3><p>Spec (CC-BY&nbsp;4.0), example bundles, and open-source tooling, all developed in public on GitHub.</p></div>
+      </div>
+      <div class="state-row">
+        <span class="st done">Available now</span>
+        <div class="state-body"><h3>Web app (installable PWA)</h3><p>Play with <code>.pweb</code> files today: open, pack, validate, and scaffold bundles &mdash; entirely in your browser. <a href="/app/">Open the app</a>.</p></div>
+      </div>
+      <div class="state-row">
+        <span class="st wip">In development</span>
+        <div class="state-body"><h3>Native viewers</h3><p>Reference viewers for desktop and mobile, so a <code>.pweb</code> opens on double-click &mdash; no browser step.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block" id="faq">
+    <p class="eyebrow">FAQ</p>
+    <h2>The questions everyone asks first.</h2>
+    <div class="faq-list">
+      <details>
+        <summary>Is this another browser?</summary>
+        <p>No. PortableWeb is a file format plus viewers. Viewers use the platform&rsquo;s existing web engine to render bundles &mdash; nobody is shipping a new one.</p>
+      </details>
+      <details>
+        <summary>Is it just a ZIP file?</summary>
+        <p>The container is ZIP, deliberately &mdash; like EPUB and DOCX. What makes it a format is the discipline on top: a <code>mimetype</code> marker, a manifest, a defined entry point, and sandbox rules every viewer must enforce.</p>
+      </details>
+      <details>
+        <summary>Does it need the internet?</summary>
+        <p>No. Bundles are fully self-contained and run offline. Network access is off by default, and only possible if declared in the manifest and granted by the user.</p>
+      </details>
+      <details>
+        <summary>Can a bundle access my files?</summary>
+        <p>No. There is no filesystem access, storage is isolated per bundle, and all permissions are deny-by-default and enforced by the viewer.</p>
+      </details>
+      <details>
+        <summary>Can I build one with existing web tools?</summary>
+        <p>Yes. Any HTML, CSS, and JavaScript works. Add a <code>manifest.json</code>, zip it per the spec &mdash; or point the <a href="/app/">web app&rsquo;s Pack tool</a> at your project folder.</p>
+      </details>
+      <details>
+        <summary>Is JavaScript allowed?</summary>
+        <p>Yes &mdash; full scripting, inside the sandbox. Real interactivity is the whole point of the format.</p>
+      </details>
+      <details>
+        <summary>Is it open source?</summary>
+        <p>Yes. The specification is CC-BY&nbsp;4.0, the tooling is MIT, and everything is developed in public at the IETF, the W3C, and on GitHub.</p>
+      </details>
+      <details>
+        <summary>Can AI generate .pweb files?</summary>
+        <p>Yes. The format is vendor-neutral &mdash; any model or tool that emits web content can produce a bundle, and the spec is written so models can eventually emit <code>.pweb</code> directly.</p>
+      </details>
     </div>
   </section>
 
   <!-- Get involved -->
   <section class="block">
     <p class="eyebrow">Get involved</p>
-    <h2>The spec is open. The work is just beginning.</h2>
+    <h2>Help define the future of interactive documents.</h2>
     <p>
-      PortableWeb is a small project with large ambitions. If any of this matters to you &mdash;
-      as an engineer, an educator, an archivist, a designer, a researcher, or a writer &mdash;
-      there&rsquo;s a place for you in it.
+      Whether you&rsquo;re a developer, educator, researcher, archivist, AI builder, or standards
+      contributor &mdash; the spec is young, and your ideas can shape PortableWeb from the beginning.
     </p>
     <div class="links-grid">
       <a class="link-card" href="https://www.w3.org/community/portableweb/join">
