@@ -51,5 +51,7 @@ Developers, AI tools and their users, teachers and students, researchers, scient
 
 - Website: https://portableweb.org/
 - Web app (open, pack, validate, scaffold): https://portableweb.org/app/
-- Specification & examples: https://github.com/portableweb/spec
+- Specification (readable, on this site): https://portableweb.org/spec/
+- Specification source & examples: https://github.com/portableweb/spec
+- IETF Internet-Draft: https://datatracker.ietf.org/doc/draft-selvaraj-portableweb-format/
 - Organization: https://github.com/portableweb

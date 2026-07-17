@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Specification — PortableWeb</title>
+  <meta name="description" content="The PortableWeb (.pweb) format specification: container format, manifest schema, permissions model, interoperability, and security considerations. Defined in IETF Internet-Draft draft-selvaraj-portableweb-format.">
+  <link rel="canonical" href="https://portableweb.org/spec/">
+  <meta name="author" content="PortableWeb">
+  <meta name="theme-color" content="#0b0b15">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="keywords" content="PortableWeb specification, .pweb format, manifest.json schema, application/vnd.portableweb+zip, IETF Internet-Draft, draft-selvaraj-portableweb-format, container format, security considerations">
+
+  <meta property="og:site_name" content="PortableWeb">
+  <meta property="og:title" content="PortableWeb — Format Specification">
+  <meta property="og:description" content="The container format, manifest schema, permissions model, and security considerations for .pweb bundles. Defined in an IETF Internet-Draft.">
+  <meta property="og:url" content="https://portableweb.org/spec/">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://portableweb.org/icons/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PortableWeb — Format Specification">
+  <meta name="twitter:description" content="The container format, manifest schema, permissions model, and security considerations for .pweb bundles.">
+  <meta name="twitter:image" content="https://portableweb.org/icons/og-image.png">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+  <link rel="mask-icon" href="/icons/icon.svg" color="#7c3aed">
+
+  <link rel="stylesheet" href="../fonts/fonts.css">
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1ab4277d7670401b84b3ea2daad6a745"}'></script><!-- End Cloudflare Web Analytics -->
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "@id": "https://portableweb.org/spec/#article",
+    "headline": "PortableWeb Format Specification",
+    "description": "The container format, manifest schema, permissions model, interoperability considerations, and security considerations for PortableWeb (.pweb) bundles.",
+    "url": "https://portableweb.org/spec/",
+    "inLanguage": "en",
+    "datePublished": "2026-06-10",
+    "dateModified": "2026-07-17",
+    "isPartOf": { "@type": "WebSite", "url": "https://portableweb.org/", "name": "PortableWeb" },
+    "about": {
+      "@type": "DefinedTerm",
+      "name": "PortableWeb (.pweb)",
+      "termCode": "application/vnd.portableweb+zip"
+    },
+    "citation": [
+      { "@type": "CreativeWork", "name": "draft-selvaraj-portableweb-format-01", "url": "https://datatracker.ietf.org/doc/draft-selvaraj-portableweb-format/" },
+      { "@type": "CreativeWork", "name": "Portable Web Content Format (PortableWeb): Container and Manifest Specification — Zenodo record", "url": "https://zenodo.org/records/20618881" }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --ink:        #0f0f1a;
+      --ink-soft:   #2d2d50;
+      --paper:      #f7f8ff;
+      --surface:    #edeeff;
+      --border:     rgba(15,15,26,0.12);
+      --accent:     #7c3aed;
+      --muted:      #6565a0;
+      --good:       #0d9488;
+      --gradient:   linear-gradient(135deg, #7c3aed 0%, #2563eb 46%, #20d6d2 100%);
+      --serif:      "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --sans:       "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --mono:       "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink:      #e8e8ff;
+        --ink-soft: #b0b0d8;
+        --paper:    #08080f;
+        --surface:  #0f0f1e;
+        --border:   rgba(232,232,255,0.1);
+        --muted:    #7070a8;
+        --good:     #2dd4bf;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    html, body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; transition: opacity 0.15s; }
+    a:hover { opacity: 0.7; }
+
+    code { font-family: var(--mono); font-size: 0.85em; background: var(--surface); padding: 0.1em 0.4em; border-radius: 4px; color: var(--accent); }
+
+    * { scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
+    ::-webkit-scrollbar { width: 13px; height: 13px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background-color: var(--muted); border-radius: 10px; border: 3px solid var(--paper); background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--ink-soft); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 clamp(1.25rem, 4vw, 2.5rem); }
+
+    /* Header */
+    header.site {
+      padding: 2rem 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .site-home { color: var(--muted); border-bottom: none; display: flex; align-items: center; gap: 0.5rem; }
+    .site-home:hover { color: var(--ink); opacity: 1; }
+    .site-glyph { width: 22px; height: 22px; color: var(--ink); display: block; flex-shrink: 0; }
+    .site-word { font-family: "Geist", var(--sans); font-size: 0.98rem; font-weight: 600; letter-spacing: -0.02em; text-transform: none; color: var(--ink); }
+    .sep { margin: 0 0.25rem; opacity: 0.4; }
+    .hdr-spacer { flex: 1; }
+    .hdr-links { display: flex; gap: 1.25rem; }
+    .hdr-links a { color: var(--muted); border-bottom: none; }
+    .hdr-links a:hover { color: var(--ink); opacity: 1; }
+
+    /* Page header */
+    .page-header {
+      padding: clamp(2.5rem, 7vh, 4rem) 0 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+    }
+    .eyebrow::before { content: ""; width: 20px; height: 2px; background: var(--gradient); border-radius: 2px; }
+
+    h1 {
+      font-size: clamp(2rem, 4.6vw, 2.65rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      max-width: 24ch;
+    }
+
+    .page-lede { font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; margin-bottom: 1.75rem; }
+
+    .cta-row { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.03em;
+      padding: 0.7rem 1.2rem; border-radius: 8px;
+      border: 1px solid var(--border); color: var(--ink);
+      border-bottom-width: 1px;
+    }
+    .btn:hover { opacity: 1; background: var(--surface); }
+    .btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .btn.primary:hover { opacity: 0.85; background: var(--ink); }
+    @media (prefers-color-scheme: dark) {
+      .btn.primary { background: var(--ink); color: var(--paper); }
+    }
+
+    /* Layout: sidebar TOC + content */
+    .spec-layout { display: grid; grid-template-columns: 220px 1fr; gap: 3.5rem; padding: 2.5rem 0 1rem; align-items: start; }
+
+    .toc { position: sticky; top: 1.5rem; font-family: var(--mono); font-size: 0.74rem; }
+    .toc-title { text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); font-size: 0.62rem; margin-bottom: 0.9rem; }
+    .toc ol { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; counter-reset: toc; }
+    .toc li { counter-increment: toc; }
+    .toc a { color: var(--ink-soft); border-bottom: none; display: block; line-height: 1.4; }
+    .toc a:hover { color: var(--accent); opacity: 1; }
+    .toc a::before { content: counter(toc) "  "; color: var(--muted); }
+
+    .content { min-width: 0; }
+
+    section.spec-section {
+      padding: 2.75rem 0;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 1.5rem;
+    }
+    section.spec-section:last-child { border-bottom: none; }
+
+    .sec-num { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 0.5rem; display: block; }
+
+    h2 { font-size: 1.45rem; font-weight: 600; margin-bottom: 1.1rem; color: var(--ink); letter-spacing: -0.01em; }
+    h3 { font-size: 1.05rem; font-weight: 600; margin: 1.75rem 0 0.75rem; color: var(--ink); }
+    h3:first-of-type { margin-top: 0; }
+
+    section.spec-section > p, .content p { margin-bottom: 1rem; font-size: 0.97rem; color: var(--ink-soft); max-width: 66ch; }
+    section.spec-section > p:last-child { margin-bottom: 0; }
+    .content ul, .content ol.plain { margin: 0 0 1rem 1.3rem; color: var(--ink-soft); font-size: 0.97rem; }
+    .content ul li, .content ol.plain li { margin-bottom: 0.5rem; }
+    .content strong { color: var(--ink); font-weight: 600; }
+
+    /* definition list (terminology) */
+    .deflist { display: flex; flex-direction: column; gap: 1.1rem; margin: 1rem 0; }
+    .deflist dt { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.25rem; }
+    .deflist dd { color: var(--ink-soft); font-size: 0.95rem; max-width: 60ch; }
+
+    /* field tables */
+    .table-wrap { overflow-x: auto; margin: 1.25rem 0 1.75rem; border: 1px solid var(--border); border-radius: 8px; }
+    table.field-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 560px; }
+    table.field-table th, table.field-table td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    table.field-table tr:last-child td { border-bottom: none; }
+    table.field-table th { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 400; background: var(--surface); }
+    table.field-table td.f-name { font-family: var(--mono); font-size: 0.82rem; color: var(--accent); white-space: nowrap; }
+    table.field-table td.f-type { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); white-space: nowrap; }
+    table.field-table td.f-default { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-soft); white-space: nowrap; }
+    table.field-table td.f-desc { color: var(--ink-soft); line-height: 1.5; }
+    table.field-table td.f-desc code { white-space: nowrap; }
+
+    /* code blocks */
+    pre.code {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1.15rem 1.3rem; overflow-x: auto; font-family: var(--mono); font-size: 0.8rem;
+      line-height: 1.65; color: var(--ink-soft); margin: 1rem 0 1.75rem;
+    }
+    pre.code .k { color: var(--accent); }
+    pre.code .s { color: var(--good); }
+    pre.code .c { color: var(--muted); }
+
+    /* anatomy diagram */
+    .anatomy { display: grid; grid-template-columns: 1fr; gap: 0; margin: 1.25rem 0 1.75rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-family: var(--mono); font-size: 0.82rem; }
+    .anatomy-row { display: grid; grid-template-columns: 15ch 1fr; gap: 1rem; padding: 0.8rem 1.15rem; border-bottom: 1px solid var(--border); align-items: baseline; }
+    .anatomy-row:last-child { border-bottom: none; }
+    .anatomy-row.header { background: var(--ink); color: var(--paper); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; padding: 0.55rem 1.15rem; }
+    .anatomy-row .filename { color: var(--ink); font-weight: 600; }
+    .anatomy-row .filename .req { color: var(--accent); font-weight: 400; }
+    .anatomy-row .desc { color: var(--muted); font-family: var(--serif); font-size: 0.92rem; line-height: 1.4; }
+    .anatomy-row.header .filename, .anatomy-row.header .desc { color: var(--paper); font-family: var(--mono); font-size: 0.62rem; }
+
+    /* callout / security emphasis */
+    .callout {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 1.1rem 1.3rem;
+      background: var(--surface);
+      margin: 0.5rem 0 1.75rem;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+    .callout strong { color: var(--ink); }
+
+    .facts-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 1.75rem 0; }
+    .fact { background: var(--paper); padding: 1rem 1.15rem; }
+    .fact-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+    .fact-value { font-family: var(--mono); font-size: 0.85rem; color: var(--ink); word-break: break-word; }
+
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .link-card { display: block; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .link-card:hover { border-color: var(--accent); opacity: 1; }
+    .link-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+    .link-title { font-weight: 600; font-size: 0.95rem; color: var(--ink); }
+    .link-arrow { color: var(--muted); }
+    .link-desc { font-size: 0.85rem; color: var(--muted); margin: 0; }
+
+    .refs { font-size: 0.88rem; color: var(--ink-soft); }
+    .refs dt { font-family: var(--mono); color: var(--accent); font-size: 0.82rem; margin-top: 0.9rem; }
+    .refs dd { margin: 0.15rem 0 0; }
+
+    .bottom-links {
+      display: flex; gap: 0.85rem; flex-wrap: wrap;
+      padding: 0 0 1rem;
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+      padding-top: 2.25rem;
+    }
+
+    /* Footer */
+    footer {
+      padding: 3rem 0 2.5rem;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); border-bottom: 1px solid transparent; }
+    footer a:hover { color: var(--ink); border-bottom-color: currentColor; opacity: 1; }
+
+    @media (max-width: 860px) {
+      .spec-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+      .toc { position: static; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; }
+      .toc ol { flex-direction: row; flex-wrap: wrap; gap: 0.5rem 1rem; }
+      .anatomy-row { grid-template-columns: 1fr; gap: 0.25rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site">
+    <a class="site-home" href="/">
+      <svg class="site-glyph" viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="6.5" width="18" height="5" rx="2.5" fill="currentColor" opacity="0.32"></rect><rect x="7" y="11" width="22" height="6" rx="3" fill="currentColor" opacity="0.6"></rect><rect x="5" y="16.5" width="26" height="13.5" rx="4" fill="currentColor"></rect></svg>
+      <span class="site-word">PortableWeb</span>
+    </a>
+    <span class="sep">/</span>
+    <span>Specification</span>
+    <div class="hdr-spacer"></div>
+    <nav class="hdr-links">
+      <a href="/app/">App</a>
+      <a href="/contributions/">Contributions</a>
+      <a href="https://github.com/portableweb/spec">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="page-header">
+    <p class="eyebrow">Specification</p>
+    <h1>The PortableWeb format specification.</h1>
+    <p class="page-lede">
+      The container format, manifest schema, permissions model, interoperability rules, and
+      security considerations for <code>.pweb</code> bundles &mdash; version 0.1. This page is a
+      readable companion to the normative text; the IETF Internet-Draft is authoritative.
+    </p>
+  </div>
+
+  <div class="spec-layout">
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#design-goals">Design goals</a></li>
+        <li><a href="#terminology">Terminology</a></li>
+        <li><a href="#container">Container format</a></li>
+        <li><a href="#manifest">Manifest schema</a></li>
+        <li><a href="#interop">Interoperability</a></li>
+        <li><a href="#security">Security considerations</a></li>
+        <li><a href="#iana">IANA considerations</a></li>
+        <li><a href="#references">References</a></li>
+        <li><a href="#status">Status &amp; versioning</a></li>
+      </ol>
+    </nav>
+
+    <div class="content">
+
+      <!-- 1. Overview -->
+      <section class="spec-section" id="overview">
+        <span class="sec-num">§1</span>
+        <h2>Overview</h2>
+        <p>
+          PortableWeb defines a file format for packaging interactive web content &mdash;
+          HTML, CSS, JavaScript, and associated media &mdash; into a single self-contained,
+          portable bundle. A PortableWeb bundle (<code>.pweb</code> file) can be saved, shared,
+          and rendered by a compatible viewer on any platform, entirely offline, without a web
+          server, without association with a Web origin, and without being confined to a web
+          browser.
+        </p>
+        <p>
+          This document defines the container format and manifest schema for PortableWeb
+          bundles at spec version 0.1. Companion specifications covering the runtime sandbox,
+          storage model, cryptographic signing, and inter-bundle communication are forthcoming
+          and out of scope here.
+        </p>
+        <p>
+          The format is <strong>content-model agnostic</strong>: a bundle may contain a book, a
+          game, an interactive presentation, an educational simulation, a 3D experience, a
+          scientific model, a collaborative application, or any other interactive content built
+          on web technologies. The format imposes no constraints on the content model.
+        </p>
+
+        <div class="facts-strip">
+          <div class="fact"><div class="fact-label">File extension</div><div class="fact-value">.pweb</div></div>
+          <div class="fact"><div class="fact-label">Media type</div><div class="fact-value">application/vnd.portableweb+zip</div></div>
+          <div class="fact"><div class="fact-label">Magic bytes</div><div class="fact-value">50 4B 03 04</div></div>
+          <div class="fact"><div class="fact-label">Container</div><div class="fact-value">ZIP (ISO/IEC 21320&#8209;1)</div></div>
+          <div class="fact"><div class="fact-label">Manifest</div><div class="fact-value">manifest.json (UTF-8)</div></div>
+          <div class="fact"><div class="fact-label">Spec license</div><div class="fact-value">CC-BY 4.0</div></div>
+        </div>
+      </section>
+
+      <!-- 1.1 Design goals -->
+      <section class="spec-section" id="design-goals">
+        <span class="sec-num">§1.1</span>
+        <h2>Design goals</h2>
+        <p>The PortableWeb format is designed to:</p>
+        <ul>
+          <li>Be openable by any compatible viewer on any platform, entirely offline.</li>
+          <li>Behave like a document: saveable, copyable, shareable, and archivable.</li>
+          <li>Support any interactive content built on standard web technologies.</li>
+          <li>Operate without a Web origin and without being confined to a web browser.</li>
+          <li>Declare capabilities and permissions upfront in a structured manifest.</li>
+          <li>Provide a stable, versioned format with long-term backwards compatibility.</li>
+          <li>Be identifiable without unpacking, via magic bytes and a <code>mimetype</code> entry.</li>
+          <li>Remain simple enough that a conforming implementation can be built quickly.</li>
+        </ul>
+      </section>
+
+      <!-- 2. Terminology -->
+      <section class="spec-section" id="terminology">
+        <span class="sec-num">§2</span>
+        <h2>Terminology</h2>
+        <p>
+          The key words <strong>MUST</strong>, <strong>MUST NOT</strong>, <strong>REQUIRED</strong>,
+          <strong>SHALL</strong>, <strong>SHALL NOT</strong>, <strong>SHOULD</strong>,
+          <strong>SHOULD NOT</strong>, <strong>RECOMMENDED</strong>, <strong>NOT RECOMMENDED</strong>,
+          <strong>MAY</strong>, and <strong>OPTIONAL</strong> in this document are to be interpreted
+          as described in BCP&nbsp;14 (RFC&nbsp;2119, RFC&nbsp;8174) when, and only when, they
+          appear in all capitals.
+        </p>
+        <dl class="deflist">
+          <dt>PortableWeb</dt>
+          <dd>Short form of &ldquo;Portable Web Content Format,&rdquo; the file format defined by this specification.</dd>
+          <dt>Bundle</dt>
+          <dd>A single <code>.pweb</code> file conforming to this specification.</dd>
+          <dt>Viewer</dt>
+          <dd>Software that opens, renders, and sandboxes a bundle.</dd>
+          <dt>Manifest</dt>
+          <dd>The <code>manifest.json</code> file at the root of a bundle archive.</dd>
+          <dt>Entry file</dt>
+          <dd>The HTML file the viewer loads first, declared in the manifest's <code>entry</code> field.</dd>
+          <dt>Package boundary</dt>
+          <dd>The set of files contained within a bundle. Resources outside this boundary are external resources.</dd>
+        </dl>
+      </section>
+
+      <!-- 3. Container format -->
+      <section class="spec-section" id="container">
+        <span class="sec-num">§3</span>
+        <h2>Container format</h2>
+
+        <h3>3.1 &middot; File extension &amp; media type</h3>
+        <p>A PortableWeb bundle uses the following identifiers:</p>
+        <ul>
+          <li><strong>File extension:</strong> <code>.pweb</code></li>
+          <li><strong>Media type:</strong> <code>application/vnd.portableweb+zip</code></li>
+          <li><strong>Magic bytes:</strong> <code>50 4B 03 04</code> (<code>PK\003\004</code>) &mdash; the standard ZIP local file header signature.</li>
+        </ul>
+        <p>
+          A viewer <strong>MUST</strong> accept files with the <code>.pweb</code> extension or the
+          <code>application/vnd.portableweb+zip</code> media type, and <strong>SHOULD</strong> also
+          identify bundles by inspecting the <code>mimetype</code> entry described below.
+        </p>
+
+        <h3>3.2 &middot; Outer container</h3>
+        <p>
+          A bundle <strong>MUST</strong> be a valid ZIP archive. The ISO/IEC 21320-1 Document
+          Container File profile is RECOMMENDED. Specifically: the archive <strong>MUST NOT</strong>
+          be encrypted or split across multiple files; file and directory names <strong>MUST</strong>
+          use forward slashes as path separators, encoded in UTF-8; and the archive
+          <strong>SHOULD NOT</strong> contain absolute paths or <code>..</code> path components.
+        </p>
+
+        <h3>3.3 &middot; The mimetype entry</h3>
+        <p>A bundle <strong>MUST</strong> contain a file named <code>mimetype</code> at the archive root with these properties:</p>
+        <ul>
+          <li><strong>Contents:</strong> the ASCII string <code>application/vnd.portableweb+zip</code>, with no trailing newline or whitespace.</li>
+          <li><strong>Position:</strong> the first entry in the ZIP archive.</li>
+          <li><strong>Compression:</strong> STORED (method 0, uncompressed).</li>
+          <li><strong>No extra fields</strong> in the local file header.</li>
+        </ul>
+        <p>
+          This convention, borrowed from EPUB, lets a tool identify a PortableWeb bundle by
+          reading the first ~80 bytes of the file without unpacking the archive.
+        </p>
+
+        <h3>3.4 &ndash; 3.5 &middot; manifest.json and the entry file</h3>
+        <p>
+          A bundle <strong>MUST</strong> contain a <code>manifest.json</code> file at the archive
+          root, encoded as UTF-8 JSON without a byte order mark, declaring at minimum the spec
+          version, a unique bundle identifier, the bundle version, a title, the entry file path,
+          and any declared permissions (schema in <a href="#manifest">§4</a>).
+        </p>
+        <p>
+          A bundle <strong>MUST</strong> contain the file referenced by the manifest's
+          <code>entry</code> field. The entry file <strong>MUST</strong> have a <code>.html</code>
+          or <code>.htm</code> extension and <strong>MUST</strong> be valid HTML5. It is loaded by
+          the viewer in a sandboxed context; all other files in the bundle are addressable from it
+          using relative paths.
+        </p>
+
+        <h3>3.6 &middot; Recommended file layout</h3>
+        <p>The following layout is RECOMMENDED but not required &mdash; bundles MAY use any layout consistent with this section.</p>
+        <div class="anatomy" role="figure" aria-label="Recommended file layout inside a .pweb bundle">
+          <div class="anatomy-row header"><span class="filename">Path</span><span class="desc">Role</span></div>
+          <div class="anatomy-row"><span class="filename">mimetype <span class="req">&middot; required</span></span><span class="desc">First entry, uncompressed.</span></div>
+          <div class="anatomy-row"><span class="filename">manifest.json <span class="req">&middot; required</span></span><span class="desc">At archive root.</span></div>
+          <div class="anatomy-row"><span class="filename">index.html <span class="req">&middot; required</span></span><span class="desc">Entry file (or as declared in <code>entry</code>).</span></div>
+          <div class="anatomy-row"><span class="filename">assets/</span><span class="desc">Recommended: images, fonts, icons.</span></div>
+          <div class="anatomy-row"><span class="filename">scripts/</span><span class="desc">Recommended: JavaScript files.</span></div>
+          <div class="anatomy-row"><span class="filename">styles/</span><span class="desc">Recommended: CSS files.</span></div>
+          <div class="anatomy-row"><span class="filename">media/</span><span class="desc">Recommended: audio and video.</span></div>
+          <div class="anatomy-row"><span class="filename">data/</span><span class="desc">Recommended: JSON and static data.</span></div>
+        </div>
+
+        <h3>3.7 &middot; Reserved paths</h3>
+        <p>
+          The following paths at the archive root are reserved. Bundles <strong>SHOULD NOT</strong>
+          create files at these paths unless following an explicit PortableWeb sub-specification:
+          <code>mimetype</code>, <code>manifest.json</code>, <code>META-INF/</code> (reserved for
+          signature manifests and integrity data), and <code>.well-known/</code> (reserved for
+          future use).
+        </p>
+
+        <h3>3.8 &middot; Bundle identification</h3>
+        <p>
+          A viewer <strong>SHOULD</strong> identify a file as a PortableWeb bundle if the file
+          extension is <code>.pweb</code>, the declared media type is
+          <code>application/vnd.portableweb+zip</code>, or the first ZIP entry is a STORED file
+          named <code>mimetype</code> containing exactly that string. A viewer
+          <strong>SHOULD</strong> reject any file claiming to be a PortableWeb bundle that fails
+          to validate against this section.
+        </p>
+
+        <h3>3.9 &middot; Versioning</h3>
+        <p>
+          The container format is versioned independently from companion specifications; this
+          document describes container version 0.1. Future container versions
+          <strong>MUST</strong> remain backwards compatible &mdash; a bundle declaring
+          <code>spec_version: "1.0"</code> in its manifest <strong>MUST</strong> remain openable
+          by any future viewer that claims support for v1.0 bundles. New features are added in
+          new spec versions; existing features are not removed. This guarantee is the foundation
+          of the PortableWeb archival promise.
+        </p>
+      </section>
+
+      <!-- 4. Manifest schema -->
+      <section class="spec-section" id="manifest">
+        <span class="sec-num">§4</span>
+        <h2>Manifest schema</h2>
+        <p>
+          Every bundle contains a <code>manifest.json</code> at its archive root: structured
+          metadata that identifies the bundle, declares its entry point, specifies requested
+          permissions, and carries rights and authorship information. It <strong>MUST</strong>
+          be a valid JSON object, UTF-8 encoded, without a byte order mark.
+        </p>
+
+        <h3>4.3 &middot; Required fields</h3>
+        <div class="table-wrap">
+          <table class="field-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="f-name">spec_version</td><td class="f-type">string</td><td class="f-desc">The container spec version this bundle targets. Format <code>"MAJOR.MINOR"</code>. For v0.1 bundles, <strong>MUST</strong> be <code>"0.1"</code>.</td></tr>
+              <tr><td class="f-name">id</td><td class="f-type">string</td><td class="f-desc">A globally unique identifier in reverse-domain notation (e.g. <code>"org.example.my-bundle"</code>). Lowercase alphanumeric, dots, and hyphens only.</td></tr>
+              <tr><td class="f-name">version</td><td class="f-type">string</td><td class="f-desc">The bundle's own version, following Semantic Versioning 2.0 (e.g. <code>"1.0.0"</code>).</td></tr>
+              <tr><td class="f-name">title</td><td class="f-type">string</td><td class="f-desc">A human-readable title. <strong>MUST NOT</strong> exceed 200 characters.</td></tr>
+              <tr><td class="f-name">entry</td><td class="f-type">string</td><td class="f-desc">Path within the bundle to the HTML entry file. <strong>MUST</strong> end in <code>.html</code> or <code>.htm</code>; <strong>MUST NOT</strong> begin with <code>/</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4.4 &middot; Recommended fields</h3>
+        <div class="table-wrap">
+          <table class="field-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="f-name">description</td><td class="f-type">string</td><td class="f-desc">A short description of the bundle. Max 1000 characters.</td></tr>
+              <tr><td class="f-name">author</td><td class="f-type">object</td><td class="f-desc"><code>name</code> (required), <code>email</code> (optional), <code>url</code> (optional).</td></tr>
+              <tr><td class="f-name">created</td><td class="f-type">string</td><td class="f-desc">Creation date, ISO 8601 (e.g. <code>"2026-05-24T00:00:00Z"</code>).</td></tr>
+              <tr><td class="f-name">icon</td><td class="f-type">string</td><td class="f-desc">Path within the bundle to a square icon (SVG or PNG recommended).</td></tr>
+              <tr><td class="f-name">permissions</td><td class="f-type">object</td><td class="f-desc">Declared capabilities &mdash; see <a href="#permissions-table">the permissions table</a>. If omitted, all permissions default to their specified defaults.</td></tr>
+              <tr><td class="f-name">rights</td><td class="f-type">object</td><td class="f-desc">Copyright and license information &mdash; see below.</td></tr>
+              <tr><td class="f-name">viewport</td><td class="f-type">object</td><td class="f-desc">Hints to the viewer for initial window sizing &mdash; see below.</td></tr>
+              <tr><td class="f-name">content_type</td><td class="f-type">string</td><td class="f-desc">A hint describing the content's nature. Recommended values: <code>game</code>, <code>presentation</code>, <code>book</code>, <code>simulation</code>, <code>tool</code>, <code>report</code>, <code>visualization</code>, <code>education</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="permissions-table">4.5 &middot; Permissions</h3>
+        <p>
+          Permissions are declared upfront in the manifest and are <strong>not</strong> requested
+          at runtime. Any permission not declared is denied by default. Viewers
+          <strong>SHOULD</strong> present declared permissions to the user when a bundle is first
+          opened.
+        </p>
+        <div class="table-wrap">
+          <table class="field-table">
+            <thead><tr><th>Permission</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="f-name">network</td><td class="f-type">boolean</td><td class="f-default">false</td><td class="f-desc">Allow fetch / XMLHttpRequest to non-bundle URLs. Archival bundles SHOULD keep this false.</td></tr>
+              <tr><td class="f-name">camera</td><td class="f-type">boolean | string</td><td class="f-default">false</td><td class="f-desc">Allow <code>getUserMedia</code> video access. A string value is shown to the user as a justification.</td></tr>
+              <tr><td class="f-name">microphone</td><td class="f-type">boolean | string</td><td class="f-default">false</td><td class="f-desc">Allow <code>getUserMedia</code> audio access.</td></tr>
+              <tr><td class="f-name">geolocation</td><td class="f-type">boolean | string</td><td class="f-default">false</td><td class="f-desc">Allow the Geolocation API.</td></tr>
+              <tr><td class="f-name">clipboard_write</td><td class="f-type">boolean</td><td class="f-default">false</td><td class="f-desc">Allow programmatic writes to the system clipboard.</td></tr>
+              <tr><td class="f-name">notifications</td><td class="f-type">boolean</td><td class="f-default">false</td><td class="f-desc">Allow OS-level notifications while the bundle is open.</td></tr>
+              <tr><td class="f-name">fullscreen</td><td class="f-type">boolean</td><td class="f-default">true</td><td class="f-desc">Allow the Fullscreen API. Defaults true due to low risk.</td></tr>
+              <tr><td class="f-name">storage</td><td class="f-type">string</td><td class="f-default">"isolated"</td><td class="f-desc"><code>"none"</code> (no persistent storage) or <code>"isolated"</code> (scoped localStorage/IndexedDB, isolated per bundle).</td></tr>
+              <tr><td class="f-name">peers</td><td class="f-type">boolean</td><td class="f-default">false</td><td class="f-desc">Allow inter-bundle communication via local channels. Defined in the companion COMMS specification.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Future versions of this specification MAY define additional permission keys. Viewers
+          <strong>MUST</strong> ignore unknown permission keys when the bundle targets a spec
+          version the viewer supports.
+        </p>
+
+        <h3>4.6 &middot; The rights object</h3>
+        <div class="table-wrap">
+          <table class="field-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="f-name">copyright</td><td class="f-type">string</td><td class="f-desc">Human-readable copyright notice (e.g. <code>"&copy; 2026 Jane Doe"</code>).</td></tr>
+              <tr><td class="f-name">license</td><td class="f-type">string</td><td class="f-desc">An SPDX license identifier (e.g. <code>"MIT"</code>, <code>"CC-BY-4.0"</code>, <code>"CC0-1.0"</code>, <code>"proprietary"</code>).</td></tr>
+              <tr><td class="f-name">license_url</td><td class="f-type">string</td><td class="f-desc">URL to the full license text.</td></tr>
+              <tr><td class="f-name">contact</td><td class="f-type">string</td><td class="f-desc">Contact information for licensing inquiries.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4.7 &middot; The viewport object</h3>
+        <div class="table-wrap">
+          <table class="field-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="f-name">preferred_width</td><td class="f-type">integer</td><td class="f-desc">Suggested initial window width in CSS pixels.</td></tr>
+              <tr><td class="f-name">preferred_height</td><td class="f-type">integer</td><td class="f-desc">Suggested initial window height in CSS pixels.</td></tr>
+              <tr><td class="f-name">resizable</td><td class="f-type">boolean</td><td class="f-desc">Whether the viewer window should be resizable. Default: true.</td></tr>
+              <tr><td class="f-name">min_width</td><td class="f-type">integer</td><td class="f-desc">Minimum window width in CSS pixels.</td></tr>
+              <tr><td class="f-name">min_height</td><td class="f-type">integer</td><td class="f-desc">Minimum window height in CSS pixels.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>These are hints, not requirements &mdash; viewers MAY override them based on the user's environment or platform conventions.</p>
+
+        <h3>4.8 &middot; Example: minimal valid manifest</h3>
+        <pre class="code">{
+  <span class="k">"spec_version"</span>: <span class="s">"0.1"</span>,
+  <span class="k">"id"</span>: <span class="s">"org.example.minimal"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.0.0"</span>,
+  <span class="k">"title"</span>: <span class="s">"Minimal Example"</span>,
+  <span class="k">"entry"</span>: <span class="s">"index.html"</span>
+}</pre>
+
+        <h3>4.9 &middot; Example: full manifest</h3>
+        <pre class="code">{
+  <span class="k">"spec_version"</span>: <span class="s">"0.1"</span>,
+  <span class="k">"id"</span>: <span class="s">"org.example.solar-system"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.2.0"</span>,
+  <span class="k">"title"</span>: <span class="s">"Interactive Solar System"</span>,
+  <span class="k">"description"</span>: <span class="s">"Explore planet orbits and relative scales."</span>,
+  <span class="k">"content_type"</span>: <span class="s">"simulation"</span>,
+  <span class="k">"author"</span>: {
+    <span class="k">"name"</span>: <span class="s">"Jane Doe"</span>,
+    <span class="k">"email"</span>: <span class="s">"jane@example.com"</span>,
+    <span class="k">"url"</span>: <span class="s">"https://janedoe.example.com"</span>
+  },
+  <span class="k">"created"</span>: <span class="s">"2026-05-24T00:00:00Z"</span>,
+  <span class="k">"icon"</span>: <span class="s">"assets/icon.svg"</span>,
+  <span class="k">"entry"</span>: <span class="s">"index.html"</span>,
+  <span class="k">"permissions"</span>: {
+    <span class="k">"network"</span>: <span class="c">false</span>,
+    <span class="k">"camera"</span>: <span class="c">false</span>,
+    <span class="k">"microphone"</span>: <span class="c">false</span>,
+    <span class="k">"storage"</span>: <span class="s">"isolated"</span>,
+    <span class="k">"fullscreen"</span>: <span class="c">true</span>,
+    <span class="k">"peers"</span>: <span class="c">false</span>
+  },
+  <span class="k">"rights"</span>: {
+    <span class="k">"copyright"</span>: <span class="s">"&copy; 2026 Jane Doe"</span>,
+    <span class="k">"license"</span>: <span class="s">"CC-BY-4.0"</span>,
+    <span class="k">"license_url"</span>: <span class="s">"https://creativecommons.org/licenses/by/4.0/"</span>
+  },
+  <span class="k">"viewport"</span>: {
+    <span class="k">"preferred_width"</span>: <span class="c">1280</span>,
+    <span class="k">"preferred_height"</span>: <span class="c">800</span>,
+    <span class="k">"resizable"</span>: <span class="c">true</span>,
+    <span class="k">"min_width"</span>: <span class="c">800</span>,
+    <span class="k">"min_height"</span>: <span class="c">600</span>
+  }
+}</pre>
+
+        <h3>4.10 &middot; Validation</h3>
+        <p>
+          Viewers and tools <strong>SHOULD</strong> validate manifests against the schema before
+          opening a bundle. A formal JSON Schema document for this manifest will be published at
+          <code>portableweb.org/spec/manifest.schema.json</code>. In the meantime, the
+          <a href="/app/">web app's Validate tool</a> runs the equivalent checks client-side.
+        </p>
+      </section>
+
+      <!-- 5. Interoperability -->
+      <section class="spec-section" id="interop">
+        <span class="sec-num">§5</span>
+        <h2>Interoperability considerations</h2>
+        <p>
+          Interoperability depends on viewers interpreting the manifest consistently, resolving
+          resource paths consistently, and enforcing package boundaries consistently.
+        </p>
+        <p>
+          Implementations <strong>SHOULD</strong> use UTF-8 for manifest data and resource
+          identifiers. Resource paths <strong>SHOULD</strong> be treated as case-sensitive,
+          package-relative paths. Implementations <strong>SHOULD</strong> avoid relying on
+          platform-specific filesystem behavior such as case-insensitive path matching, absolute
+          paths, drive letters, symbolic links, or path separators other than <code>/</code>.
+          Viewers <strong>SHOULD</strong> reject or normalize ambiguous paths, duplicate entries,
+          and references that resolve outside the package boundary.
+        </p>
+        <p>
+          Bundles may contain common web resource formats including HTML, CSS, JavaScript, JSON,
+          images, fonts, audio, and video. Rendering behavior may vary between web engines and
+          viewer implementations, particularly for optional platform features, media codecs, and
+          device APIs. Bundle authors <strong>SHOULD</strong> use widely supported web standards
+          and <strong>SHOULD</strong> declare required or requested capabilities in the manifest.
+          Viewers <strong>SHOULD</strong> ignore unknown manifest fields that are not required
+          for safe processing.
+        </p>
+        <p>
+          A conforming local PortableWeb bundle <strong>SHOULD</strong> be interpretable using
+          only the resources it contains, unless the manifest and viewer policy explicitly allow
+          external network access.
+        </p>
+      </section>
+
+      <!-- 6. Security considerations -->
+      <section class="spec-section" id="security">
+        <span class="sec-num">§6</span>
+        <h2>Security considerations</h2>
+        <div class="callout">
+          <strong>Note.</strong> This section states the current, tightened security requirements
+          for PortableWeb implementers. It refines Section&nbsp;6 of the published -01 Internet-Draft,
+          strengthening several SHOULD-level statements to MUST-level as the format's security
+          model has firmed up ahead of the next draft revision.
+        </div>
+
+        <h3>6.1 &middot; Untrusted by default</h3>
+        <p>
+          PortableWeb packages can contain active or executable web content, including HTML,
+          ECMAScript/JavaScript and, where supported by the viewer, WebAssembly. Implementations
+          <strong>must</strong> treat PortableWeb packages as untrusted input unless the source
+          and integrity of the package have been independently established.
+        </p>
+
+        <h3>6.2 &middot; Sandboxed execution &amp; capability requests</h3>
+        <p>
+          A viewer that executes active content <strong>must</strong> isolate that content from
+          the viewer application and the host environment. Packaged content <strong>must
+          not</strong> receive ambient access to local files, host credentials, cookies,
+          application data, device APIs, persistent storage, network resources, the clipboard,
+          downloads, popups, external navigation, or privileged host APIs. Access to such
+          capabilities <strong>must</strong> be explicitly permitted by both the viewer or user
+          policy and, where applicable, the package manifest. Manifest capability declarations
+          are requests and <strong>must not</strong> be treated as authorization. A viewer
+          <strong>may</strong> deny or further restrict any requested capability.
+        </p>
+
+        <h3>6.3 &middot; Confidentiality, integrity &amp; trust</h3>
+        <p>
+          PortableWeb packages may contain private or sensitive information, and the safe
+          behavior of active content may depend on the integrity of the package. This media type
+          does not itself provide confidentiality, integrity, authentication, authorization, or
+          replay protection. When those properties are required, they <strong>must</strong> be
+          provided externally, for example through TLS during transport, a trusted distribution
+          channel, operating-system file protections, checksums, digital signatures, or
+          application-level validation.
+        </p>
+
+        <h3>6.4 &middot; Container &amp; resource format security</h3>
+        <p>
+          PortableWeb uses a ZIP container and a JSON manifest and may contain HTML, CSS,
+          JavaScript, WebAssembly, images, fonts, audio, video, and other media. The security
+          considerations of ZIP, JSON, and each embedded resource format apply. Implementations
+          <strong>must</strong> parse the manifest strictly, validate resource references against
+          the manifest and package boundaries, avoid unsafe content sniffing, and
+          <strong>must not</strong> grant privileges based only on a filename extension or
+          declared media type.
+        </p>
+
+        <h3>6.5 &middot; Compression &amp; archive safety</h3>
+        <p>
+          Because PortableWeb uses compression and the ZIP container format, implementations
+          <strong>must</strong> protect against decompression bombs, excessive memory or storage
+          consumption, deeply nested archives, duplicate or ambiguous entry names, absolute
+          paths, path traversal, symbolic links, filename-normalization conflicts, and
+          inconsistencies between ZIP metadata and actual content. Implementations
+          <strong>must</strong> impose limits on uncompressed size, file count, nesting depth,
+          path length, and individual resource size. Extracted resources <strong>must</strong>
+          remain within an application-controlled location.
+        </p>
+
+        <h3>6.6 &middot; External resources &amp; local-first operation</h3>
+        <p>
+          A conforming local PortableWeb package can be interpreted using only the resources
+          contained within the package. Packages may contain optional external links, but
+          external resources are not required to interpret the local package. When external
+          network access or navigation is permitted, the viewer <strong>must</strong> distinguish
+          external resources from packaged resources and mediate access according to the viewer
+          or user policy.
+        </p>
+      </section>
+
+      <!-- 7. IANA -->
+      <section class="spec-section" id="iana">
+        <span class="sec-num">§7</span>
+        <h2>IANA considerations</h2>
+        <p>The specification registers the following media type in the vendor tree:</p>
+        <div class="table-wrap">
+          <table class="field-table">
+            <tbody>
+              <tr><td class="f-name">Type name</td><td class="f-desc">application</td></tr>
+              <tr><td class="f-name">Subtype name</td><td class="f-desc">vnd.portableweb+zip</td></tr>
+              <tr><td class="f-name">Required parameters</td><td class="f-desc">None</td></tr>
+              <tr><td class="f-name">Encoding</td><td class="f-desc">Binary</td></tr>
+              <tr><td class="f-name">Magic number(s)</td><td class="f-desc">50 4B 03 04 (PK\003\004)</td></tr>
+              <tr><td class="f-name">File extension(s)</td><td class="f-desc">.pweb</td></tr>
+              <tr><td class="f-name">Intended usage</td><td class="f-desc">COMMON</td></tr>
+              <tr><td class="f-name">Contact</td><td class="f-desc">Omprakash Selvaraj, maintainer@portableweb.org</td></tr>
+              <tr><td class="f-name">Change controller</td><td class="f-desc">Omprakash Selvaraj</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Applications that use this media type: PortableWeb viewer applications, authoring
+          tools, packaging tools, validation tools, document-management systems, file managers,
+          web servers, content-distribution systems, and AI content generation tools that create,
+          distribute, inspect, validate, store, or render PortableWeb packages.
+        </p>
+      </section>
+
+      <!-- 8. References -->
+      <section class="spec-section" id="references">
+        <span class="sec-num">§8</span>
+        <h2>References</h2>
+        <div class="refs">
+          <h3>Normative</h3>
+          <dl>
+            <dt>[ISO21320]</dt><dd>ISO/IEC 21320-1: Document Container File &mdash; Part 1: Core, 2015.</dd>
+            <dt>[RFC2119]</dt><dd>Bradner, S., &ldquo;Key words for use in RFCs to Indicate Requirement Levels,&rdquo; BCP 14, RFC 2119, March 1997.</dd>
+            <dt>[RFC8174]</dt><dd>Leiba, B., &ldquo;Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words,&rdquo; BCP 14, RFC 8174, May 2017.</dd>
+            <dt>[RFC8259]</dt><dd>Bray, T., &ldquo;The JavaScript Object Notation (JSON) Data Interchange Format,&rdquo; December 2017.</dd>
+          </dl>
+          <h3>Informative</h3>
+          <dl>
+            <dt>[EPUB3]</dt><dd>&ldquo;EPUB 3.3,&rdquo; W3C, 2023.</dd>
+            <dt>[SEMVER]</dt><dd>&ldquo;Semantic Versioning 2.0.0,&rdquo; 2013.</dd>
+            <dt>[SPDX]</dt><dd>&ldquo;SPDX License List.&rdquo;</dd>
+            <dt>[WAM]</dt><dd>&ldquo;Web Application Manifest,&rdquo; W3C, 2023.</dd>
+            <dt>[WASM]</dt><dd>&ldquo;WebAssembly Core Specification,&rdquo; W3C, 2022.</dd>
+            <dt>[ZIP]</dt><dd>APPNOTE.TXT &mdash; .ZIP File Format Specification.</dd>
+          </dl>
+        </div>
+      </section>
+
+      <!-- Status -->
+      <section class="spec-section" id="status">
+        <span class="sec-num">Status</span>
+        <h2>Status &amp; versioning</h2>
+        <p>
+          This is <strong>spec version 0.1</strong>. It is registered as an IETF Internet-Draft,
+          submitted as an Independent Submission under BCP&nbsp;78/79 &mdash; a formal but
+          still-evolving public record of the format, open to feedback and revision as it
+          progresses toward a stable v1.0.
+        </p>
+        <p>
+          The broader format &mdash; the runtime sandbox, the frozen per-version feature subset,
+          cryptographic signing, storage isolation, and inter-bundle communication &mdash; is out
+          of scope for this document and is being developed in companion specifications through
+          the <a href="https://www.w3.org/community/portableweb/">W3C Portable Web Content Format
+          Community Group</a>, open to anyone.
+        </p>
+        <p>
+          Container versions are append-only: new spec versions add features without removing or
+          breaking existing ones, so a bundle that declares <code>spec_version: "1.0"</code> will
+          keep rendering correctly in any v1.0-compatible viewer, indefinitely. This is the basis
+          of the format's archival guarantee.
+        </p>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="bottom-links">
+    <a class="btn" href="https://datatracker.ietf.org/doc/draft-selvaraj-portableweb-format/">Read the IETF draft</a>
+    <a class="btn" href="https://zenodo.org/records/20618881">View on Zenodo (DOI)</a>
+    <a class="btn" href="https://github.com/portableweb/spec">Spec repo on GitHub</a>
+  </div>
+
+  <footer>
+    <span>PortableWeb &middot; 2026</span>
+    &nbsp;&middot;&nbsp;
+    <a href="/">Home</a> &middot;
+    <a href="/app/">App</a> &middot;
+    <a href="/contributions/">Contributions</a> &middot;
+    <a href="https://www.w3.org/community/portableweb/">W3C CG</a> &middot;
+    Spec <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> &middot;
+    Code <a href="https://opensource.org/licenses/MIT">MIT</a>
+  </footer>
+
+</div>
+</body>
+</html>
