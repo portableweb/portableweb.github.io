@@ -4,7 +4,7 @@
 
 ## The problem it solves
 
-AI-assisted tools now generate interactive web content — games, simulations, presentations, reports, 3D experiences — in minutes, by the million. None of it has a natural place to live beyond a fragile, expiring URL. No prior format treats interactive web content as a portable, self-contained, immediately runnable unit: deploying needs a server; app stores need accounts and review; PDF flattens interactivity; EPUB is a book/reading model; Web Bundles were a transport optimization that never shipped; the Web App Manifest requires a live web origin. PortableWeb is that missing unit.
+Application creation is no longer limited to developers: anyone can create an interactive web application by describing it to an AI in natural language, the way people have always created documents, spreadsheets, and slide decks. Those older categories have had file formats for decades (.docx, .xlsx, .pptx); applications created this way have none — nothing platform-independent, portable, immediately runnable, shareable like a document, and able to carry its user's data inside. AI-assisted tools now generate this content — games, simulations, presentations, reports, 3D experiences — in minutes, by the million, and none of it has a natural place to live beyond a fragile, expiring URL. No prior format treats interactive web content as a portable, self-contained, immediately runnable unit: deploying needs a server; app stores need accounts and review; PDF flattens interactivity; EPUB is a book/reading model; Web Bundles were a transport optimization that never shipped; the Web App Manifest requires a live web origin. PortableWeb is that missing unit.
 
 ## How it works
 
