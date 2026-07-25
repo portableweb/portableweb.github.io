@@ -211,7 +211,7 @@ p { margin: 0 0 1rem; max-width: 38em; }
 
 /* comparison */
 .comparison { margin-top: 2rem; overflow-x: auto; }
-.comparison table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 540px; }
+.comparison table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 660px; }
 .comparison th, .comparison td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
 .comparison th { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
 .comparison td.format { font-family: var(--mono); font-size: 0.8rem; color: var(--ink); letter-spacing: 0.05em; }

@@ -479,7 +479,7 @@
   <!-- Principles -->
   <section class="block">
     <p class="eyebrow">Design principles</p>
-    <h2>Self-contained, sandboxed, archival, owned.</h2>
+    <h2>Self-contained, sandboxed, archival, stateful &mdash; and owned.</h2>
     <div class="pillars">
       <div class="pillar">
         <h3>Self-contained</h3>
@@ -497,6 +497,10 @@
         <h3>Owned</h3>
         <p>A bundle is a file. No host, no account, no subscription, no platform. You can copy it, archive it, mail it, or seal it in a time capsule. It belongs to whoever holds it.</p>
       </div>
+      <div class="pillar" style="grid-column: 1 / -1;">
+        <h3>Stateful</h3>
+        <p>Your data can live <em>inside</em> the file. A journal&rsquo;s entries, an album&rsquo;s photos and captions, a tracker&rsquo;s history &mdash; a bundle can carry its user&rsquo;s data embedded in the file itself, so the document and its data travel together. Or keep state in the viewer and export it any time. Share either way: with your data included, or stripped back to a pristine copy. Something no app platform gives you: the save file and the app, in one file you hold.</p>
+      </div>
     </div>
   </section>
 
@@ -507,14 +511,14 @@
     <div class="comparison">
       <table>
         <thead>
-          <tr><th>Format</th><th>Interactive?</th><th>Offline?</th><th>Self-contained?</th><th>No server / origin?</th></tr>
+          <tr><th>Format</th><th>Interactive?</th><th>Offline?</th><th>Self-contained?</th><th>No server / origin?</th><th>Carries user data?</th></tr>
         </thead>
         <tbody>
-          <tr><td class="format">PDF</td><td><p>Limited</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Yes</p></td></tr>
-          <tr><td class="format">Webpage / URL</td><td><p>Yes</p></td><td><p>No</p></td><td><p>No</p></td><td><p>No</p></td></tr>
-          <tr><td class="format">PWA</td><td><p>Yes</p></td><td><p>After install</p></td><td><p>No</p></td><td><p>No</p></td></tr>
-          <tr><td class="format">EPUB</td><td><p>Partial</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Yes</p></td></tr>
-          <tr><td class="format us">.pweb</td><td><p>Yes, fully</p></td><td><p>Always</p></td><td><p>Yes</p></td><td><p>Yes</p></td></tr>
+          <tr><td class="format">PDF</td><td><p>Limited</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Form fields only</p></td></tr>
+          <tr><td class="format">Webpage / URL</td><td><p>Yes</p></td><td><p>No</p></td><td><p>No</p></td><td><p>No</p></td><td><p>No</p></td></tr>
+          <tr><td class="format">PWA</td><td><p>Yes</p></td><td><p>After install</p></td><td><p>No</p></td><td><p>No</p></td><td><p>No &mdash; stuck in one browser</p></td></tr>
+          <tr><td class="format">EPUB</td><td><p>Partial</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>No &mdash; notes stay in the reader</p></td></tr>
+          <tr><td class="format us">.pweb</td><td><p>Yes, fully</p></td><td><p>Always</p></td><td><p>Yes</p></td><td><p>Yes</p></td><td><p>Yes &mdash; embedded, optional</p></td></tr>
         </tbody>
       </table>
     </div>
@@ -529,7 +533,7 @@
       <div class="use-case"><div class="num">02</div><h3>Interactive presentations</h3><p>Decks with real interactivity, sent as a file. The natural successor to PDF for anything more than text.</p></div>
       <div class="use-case"><div class="num">03</div><h3>Educational explainers</h3><p>Interactive lessons and simulations that work offline, on any device &mdash; and still work next year, and the year after.</p></div>
       <div class="use-case"><div class="num">04</div><h3>3D &amp; data experiences</h3><p>Models, visualizations, and reproducible figures that stay explorable &mdash; not screenshots of something that used to run.</p></div>
-      <div class="use-case"><div class="num">05</div><h3>Personal tools</h3><p>Journals, calculators, planners, trackers. Tools you keep as files instead of renting as subscriptions.</p></div>
+      <div class="use-case"><div class="num">05</div><h3>Personal tools</h3><p>Journals, calculators, planners, trackers. Tools you keep as files instead of renting as subscriptions &mdash; with your entries living inside the file, so the tool and its data travel together.</p></div>
       <div class="use-case"><div class="num">06</div><h3>Archival of interactive work</h3><p>For libraries, museums, journals, and individuals who need interactive content to outlive any host.</p></div>
     </div>
   </section>
@@ -681,7 +685,7 @@
       </div>
       <div class="roadmap-item">
         <div class="roadmap-version future">Then</div>
-        <div class="roadmap-body"><h3>Storage, signing &amp; peer channels</h3><p>Per-bundle isolated storage, cryptographic signing, and a permission-gated local channel (Bluetooth, Wi-Fi Direct) for offline multiplayer and collaboration &mdash; a capability no existing format has.</p></div>
+        <div class="roadmap-body"><h3>Storage, signing &amp; peer channels</h3><p>Per-bundle isolated storage &mdash; including the option for user data to live <em>inside</em> the file, so a journal&rsquo;s entries travel with the journal &mdash; cryptographic signing, and a permission-gated local channel (Bluetooth, Wi-Fi Direct) for offline multiplayer and collaboration.</p></div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-version future">v1.0</div>
